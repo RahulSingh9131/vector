@@ -1,3 +1,4 @@
+version: "2"
 run:
   # Timeout for analysis, e.g. 30s, 5m.
   timeout: 5m
@@ -24,7 +25,8 @@ run:
 output:
   # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate|html|junit-xml|github-actions
   formats:
-    - format: colored-line-number
+    colored-line-number:
+      path: stdout
   
   # Print lines of code with issue.
   print-issued-lines: true

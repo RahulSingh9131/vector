@@ -64,3 +64,15 @@ tasks:
     - go mod tidy
     - echo 'Verifying dependencies...'
     - go mod verify
+
+  lint:
+    desc: run golangci-lint to check code quality
+    cmds:
+    - echo 'Running golangci-lint...'
+    - golangci-lint run ./...
+
+  lint:fix:
+    desc: run golangci-lint and auto-fix issues
+    cmds:
+    - echo 'Running golangci-lint with auto-fix...'
+    - golangci-lint run --fix ./...

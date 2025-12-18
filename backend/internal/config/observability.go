@@ -95,7 +95,6 @@ func (c *ObservabilityConfig) GetLogLevel() string {
 	return c.Logging.Level
 }
 
-
 func (c *ObservabilityConfig) IsProduction() bool {
 	return c.Environment == "production"
 }

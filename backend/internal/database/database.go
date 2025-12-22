@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/RahulSingh9131/vector/internal/config"
@@ -56,7 +57,7 @@ func (mt *multiTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data p
 const DatabasePingTimeout = 10
 
 func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerConfig.LoggerService) (*Database, error) {
-	hostPort := net.JoinHostPort(cfg.Database.Host, cfg.Database.Port)
+	hostPort := net.JoinHostPort(cfg.Database.Host, strconv.Itoa(cfg.Database.Port))
 
 	// URL-encode the password
 	encodedPassword := url.QueryEscape(cfg.Database.Password)

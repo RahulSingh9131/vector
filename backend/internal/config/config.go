@@ -34,15 +34,15 @@ type ServerConfig struct {
 
 type DatabaseConfig struct {
 	Host            string `koanf:"host" validate:"required"`
-	Port            string `koanf:"port" validate:"required"`
+	Port            int    `koanf:"port" validate:"required"`
 	User            string `koanf:"user" validate:"required"`
 	Password        string `koanf:"password" validate:"required"`
 	Name            string `koanf:"name" validate:"required"`
 	SSLMode         string `koanf:"sslmode" validate:"required"`
 	MaxOpenConns    int    `koanf:"max_open_conns" validate:"required"`
 	MaxIdleConns    int    `koanf:"max_idle_conns" validate:"required"`
-	ConnMaxLifetime string `koanf:"conn_max_lifetime" validate:"required"`
-	ConnMaxIdleTime string `koanf:"conn_max_idle_time" validate:"required"`
+	ConnMaxLifetime int    `koanf:"conn_max_lifetime" validate:"required"`
+	ConnMaxIdleTime int    `koanf:"conn_max_idle_time" validate:"required"`
 }
 
 type RedisConfig struct {

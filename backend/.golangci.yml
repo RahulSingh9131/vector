@@ -170,16 +170,12 @@ linters:
   enable:
     # Enabled by default linters:
     - errcheck        # Checking for unchecked errors
-    - gosimple        # Simplify code
     - govet           # Reports suspicious constructs
     - ineffassign     # Detects ineffectual assignments
     - staticcheck     # Advanced Go linter
-    - typecheck       # Type-checks Go code
     - unused          # Checks for unused constants, variables, functions and types
     
     # Additional recommended linters:
-    - gofmt           # Checks whether code was gofmt-ed
-    - goimports       # Check import statements are formatted according to the 'goimport' command
     - gosec           # Inspects source code for security problems
     - misspell        # Finds commonly misspelled English words in comments
     - revive          # Fast, configurable, extensible, flexible, and beautiful linter for Go
@@ -196,10 +192,13 @@ linters:
     - noctx           # Finds sending http request without context.Context
     - rowserrcheck    # Checks whether Err of rows is checked successfully
     - sqlclosecheck   # Checks that sql.Rows and sql.Stmt are closed
-    - stylecheck      # Stylecheck is a replacement for golint
     - whitespace      # Detection of leading and trailing whitespace
-    - exportloopref   # Checks for pointers to enclosing loop variables
     - errorlint       # Find code that will cause problems with the error wrapping scheme introduced in Go 1.13
+
+formatters:
+  enable:
+    - gofmt           # Checks whether code was gofmt-ed
+    - goimports       # Check import statements are formatted according to the 'goimport' command
 
 issues:
   # List of regexps of issue texts to exclude.

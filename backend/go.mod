@@ -51,6 +51,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter v1.0.5
 	github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.3
+	github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.2
 	github.com/resend/resend-go/v2 v2.28.0
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/net v0.47.0 // indirect

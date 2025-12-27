@@ -50,12 +50,12 @@ func NewNotFoundError(message string, override bool, code *string) *HTTPError {
 	}
 }
 
-func NewInternalServerError(message string, override bool) *HTTPError {
+func NewInternalServerError() *HTTPError {
 	return &HTTPError{
 		Code:     MakeUpperCaseWithUnderscore(http.StatusText(http.StatusInternalServerError)),
-		Message:  message,
+		Message:  http.StatusText(http.StatusInternalServerError),
 		Status:   http.StatusInternalServerError,
-		Override: override,
+		Override: false,
 	}
 }
 

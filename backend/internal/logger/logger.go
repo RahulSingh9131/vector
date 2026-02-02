@@ -21,13 +21,13 @@ type LoggerService struct {
 func NewLoggerService(cfg *config.ObservabilityConfig) *LoggerService {
 	service := &LoggerService{}
 
-	if cfg.NewRelic.Licensekey == "" {
+	if cfg.NewRelic.LicenseKey == "" {
 		fmt.Println("new relic license key is not provided, skipping initialization")
 		return service
 	}
 
 	var configOptions []newrelic.ConfigOption
-	configOptions = append(configOptions, newrelic.ConfigAppName(cfg.ServiceName), newrelic.ConfigLicense(cfg.NewRelic.Licensekey), newrelic.ConfigAppLogForwardingEnabled(cfg.NewRelic.AppLogForwardingEnabled), newrelic.ConfigDistributedTracerEnabled(cfg.NewRelic.DistributedTracingEnabled))
+	configOptions = append(configOptions, newrelic.ConfigAppName(cfg.ServiceName), newrelic.ConfigLicense(cfg.NewRelic.LicenseKey), newrelic.ConfigAppLogForwardingEnabled(cfg.NewRelic.AppLogForwardingEnabled), newrelic.ConfigDistributedTracerEnabled(cfg.NewRelic.DistributedTracingEnabled))
 
 	// Add debug logic only if explicitly enabled.
 	if cfg.NewRelic.DebugLogging {

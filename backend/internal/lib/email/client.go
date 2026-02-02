@@ -19,7 +19,7 @@ type Client struct {
 
 func NewClient(cfg *config.Config, logger *zerolog.Logger) *Client {
 	return &Client{
-		client: resend.NewClient(cfg.Intergration.ResendAPIKey),
+		client: resend.NewClient(cfg.Integration.ResendAPIKey),
 		logger: logger,
 	}
 }

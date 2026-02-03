@@ -72,7 +72,7 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *logger.Logge
 
 func (s *Server) SetupHTTPServer(handler http.Handler) {
 	s.httpServer = &http.Server{
-		Addr:         "" + s.Config.Server.Port,
+		Addr:         ":" + s.Config.Server.Port,
 		Handler:      handler,
 		ReadTimeout:  time.Duration(s.Config.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(s.Config.Server.WriteTimeout) * time.Second,
@@ -89,8 +89,7 @@ func (s *Server) Start() error {
 	return s.httpServer.ListenAndServe()
 }
 
-
-func (s * Server) Shutdown(ctx context.Context) error {
+func (s *Server) Shutdown(ctx context.Context) error {
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown http server: %w", err)
 	}

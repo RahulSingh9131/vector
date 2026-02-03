@@ -39,7 +39,7 @@ type DatabaseConfig struct {
 	User            string `koanf:"user" validate:"required"`
 	Password        string `koanf:"password" validate:"required"`
 	Name            string `koanf:"name" validate:"required"`
-	SSLMode         string `koanf:"sslmode" validate:"required"`
+	SSLMode         string `koanf:"ssl_mode" validate:"required"`
 	MaxOpenConns    int    `koanf:"max_open_conns" validate:"required"`
 	MaxIdleConns    int    `koanf:"max_idle_conns" validate:"required"`
 	ConnMaxLifetime int    `koanf:"conn_max_lifetime" validate:"required"`

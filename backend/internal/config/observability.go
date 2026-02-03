@@ -40,7 +40,7 @@ func DefaultObservabilityConfig() *ObservabilityConfig {
 		Logging: LoggingConfig{
 			Level:              "info",
 			Format:             "json",
-			SlowQueryThreshold: 10 * time.Second,
+			SlowQueryThreshold: 10 * time.Millisecond,
 		},
 		NewRelic: NewRelicConfig{
 			LicenseKey:                "",
@@ -73,7 +73,7 @@ func (c *ObservabilityConfig) Validate() error {
 	}
 
 	// validate slow query threshold
-	if c.Logging.SlowQueryThreshold < 1*time.Second {
+	if c.Logging.SlowQueryThreshold < 0 {
 		return fmt.Errorf("slow query threshold must be at least 1 second")
 	}
 

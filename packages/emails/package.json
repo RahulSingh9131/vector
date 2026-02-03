@@ -1,0 +1,22 @@
+{
+  "name": "@vector/emails",
+  "version": "1.0.0",
+  "description": "package to manage emails",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "email dev --dir src/templates",
+    "export": "email export --dir src/templates --outDir out -p && email export --dir src/templates --outDir ../../backend/templates/emails -p"
+  },
+  "dependencies": {
+    "@react-email/components": "0.0.33",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-email": "3.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "typescript": "^5.7.3"
+  }
+}

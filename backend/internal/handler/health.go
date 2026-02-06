@@ -142,3 +142,9 @@ func (h *HealthHandler) CheckHealth(c echo.Context) error {
 
 	return nil
 }
+
+func (h *HealthHandler) Welcome(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Vector server is running",
+	})
+}

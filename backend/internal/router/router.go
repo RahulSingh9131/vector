@@ -13,7 +13,7 @@ import (
 )
 
 func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services) *echo.Echo {
-	middlewares := middleware.NewMiddlewares(s)
+	middlewares := middleware.NewMiddlewares(s, services)
 
 	router := echo.New()
 
@@ -54,7 +54,8 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	registerSystemRoutes(router, h)
 
 	// register versioned routes
-	router.Group("/api/v1")
+	v1 := router.Group("/api/v1")
+	registerAPIRoutes(v1, h, middlewares)
 
 	return router
 }

@@ -228,19 +228,27 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-// GetOrCreate retrieves a user by Clerk ID or creates them if they don't exist
+// GetOrCreate retrieves a user by Clerk ID or creates them if they don't exist (atomic)
 func (r *UserRepository) GetOrCreate(ctx context.Context, params models.CreateUserParams) (*models.User, error) {
-	// Try to get existing user
-	user, err := r.GetByClerkID(ctx, params.ClerkUserID)
+	query := `
+		INSERT INTO users (clerk_user_id, email, first_name, last_name, avatar_url)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (clerk_user_id) DO NOTHING
+	`
+
+	_, err := r.server.DB.Pool.Exec(
+		ctx,
+		query,
+		params.ClerkUserID,
+		params.Email,
+		params.FirstName,
+		params.LastName,
+		params.AvatarURL,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// If user exists, return it
-	if user != nil {
-		return user, nil
-	}
-
-	// Create new user
-	return r.Create(ctx, params)
+	// Always fetch the user (whether just inserted or already existed)
+	return r.GetByClerkID(ctx, params.ClerkUserID)
 }

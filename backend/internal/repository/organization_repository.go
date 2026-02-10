@@ -226,21 +226,31 @@ func (r *OrganizationRepository) Delete(ctx context.Context, id uuid.UUID) error
 	return err
 }
 
-// GetOrCreate retrieves an organization by Clerk ID or creates it if it doesn't exist
+// GetOrCreate retrieves an organization by Clerk ID or creates it if it doesn't exist (atomic)
 func (r *OrganizationRepository) GetOrCreate(ctx context.Context, params models.CreateOrganizationParams) (*models.Organization, error) {
-	// Try to get existing organization
-	org, err := r.GetByClerkID(ctx, params.ClerkOrgID)
+	query := `
+		INSERT INTO organizations (clerk_org_id, name, slug, logo_url, subscription_tier, max_members, max_projects)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (clerk_org_id) DO NOTHING
+	`
+
+	_, err := r.server.DB.Pool.Exec(
+		ctx,
+		query,
+		params.ClerkOrgID,
+		params.Name,
+		params.Slug,
+		params.LogoURL,
+		params.SubscriptionTier,
+		params.MaxMembers,
+		params.MaxProjects,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// If organization exists, return it
-	if org != nil {
-		return org, nil
-	}
-
-	// Create new organization
-	return r.Create(ctx, params)
+	// Always fetch the organization (whether just inserted or already existed)
+	return r.GetByClerkID(ctx, params.ClerkOrgID)
 }
 
 // GetMemberCount returns the number of members in an organization

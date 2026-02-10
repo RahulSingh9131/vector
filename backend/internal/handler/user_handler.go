@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/RahulSingh9131/vector/internal/service"
@@ -10,43 +11,49 @@ import (
 )
 
 type UserHandler struct {
-	server   *server.Server
+	Handler
 	services *service.Services
 }
 
 func NewUserHandler(s *server.Server, services *service.Services) *UserHandler {
 	return &UserHandler{
-		server:   s,
+		Handler:  NewHandler(s),
 		services: services,
 	}
 }
 
 // GetCurrentUser returns the profile of the currently authenticated user
-func (h *UserHandler) GetCurrentUser(c echo.Context) error {
+func (h *UserHandler) GetCurrentUser(c echo.Context, req *EmptyRequest) (*models.User, error) {
 	user, ok := c.Get("user").(*models.User)
 	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "User not found in context")
+		return nil, errs.NewInternalServerError()
 	}
 
-	return c.JSON(http.StatusOK, user)
+	return user, nil
 }
 
 // UpdateCurrentUser updates the profile of the currently authenticated user
-func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
+func (h *UserHandler) UpdateCurrentUser(c echo.Context, req *UpdateCurrentUserRequest) (*models.User, error) {
 	user, ok := c.Get("user").(*models.User)
 	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "User not found in context")
+		return nil, errs.NewInternalServerError()
 	}
 
-	var params models.UpdateUserParams
-	if err := c.Bind(&params); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
-	}
-
-	updatedUser, err := h.services.User.UpdateProfile(c.Request().Context(), user.ID, params)
+	updatedUser, err := h.services.User.UpdateProfile(c.Request().Context(), user.ID, models.UpdateUserParams{
+		Email:     req.Email,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		AvatarURL: req.AvatarURL,
+	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user profile")
+		return nil, err // base.go handles logging + New Relic; GlobalErrorHandler maps sqlerr
 	}
 
-	return c.JSON(http.StatusOK, updatedUser)
+	return updatedUser, nil
+}
+
+// RegisterRoutes registers all user routes
+func (h *UserHandler) RegisterRoutes(g *echo.Group) {
+	g.GET("/me", Handle(h.Handler, h.GetCurrentUser, http.StatusOK, &EmptyRequest{}))
+	g.PUT("/me", Handle(h.Handler, h.UpdateCurrentUser, http.StatusOK, &UpdateCurrentUserRequest{}))
 }

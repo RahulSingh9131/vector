@@ -17,15 +17,10 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 	api := r.Group("", m.Auth.RequireAuth)
 	{
 		// User routes
-		api.GET("/me", h.User.GetCurrentUser)
-		api.PUT("/me", h.User.UpdateCurrentUser)
+		h.User.RegisterRoutes(api)
 
 		// Organization routes
 		orgs := api.Group("/organizations")
-		{
-			orgs.GET("", h.Organization.ListOrganizations)
-			orgs.GET("/:id", h.Organization.GetOrganization)
-			orgs.GET("/:id/members", h.Organization.ListMembers)
-		}
+		h.Organization.RegisterRoutes(orgs)
 	}
 }

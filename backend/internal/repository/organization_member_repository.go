@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -61,8 +62,16 @@ func (r *OrganizationMemberRepository) RemoveMember(ctx context.Context, organiz
 		WHERE organization_id = $1 AND user_id = $2
 	`
 
-	_, err := r.server.DB.Pool.Exec(ctx, query, organizationID, userID)
-	return err
+	result, err := r.server.DB.Pool.Exec(ctx, query, organizationID, userID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("member not found in organization")
+	}
+
+	return nil
 }
 
 // UpdateRole updates a member's role in an organization
@@ -90,6 +99,9 @@ func (r *OrganizationMemberRepository) UpdateRole(ctx context.Context, organizat
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("member not found in organization")
+		}
 		return nil, err
 	}
 

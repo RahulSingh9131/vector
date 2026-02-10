@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./z.js";
 
 const ZHealthCheck = z.object({
     status: z.string(),

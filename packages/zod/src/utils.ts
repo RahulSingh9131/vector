@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./z.js";
 
 export type PaginatedResponse<T> = {
     data: T[];

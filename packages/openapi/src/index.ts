@@ -1,7 +1,3 @@
-import { extendZodWithOpenApi } from "@anatine/zod-openapi";
-import { z } from "zod";
-
-extendZodWithOpenApi(z);
 import { generateOpenApi } from "@ts-rest/open-api";
 
 import { apiContract } from "./contracts/index.js";

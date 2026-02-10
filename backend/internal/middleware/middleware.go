@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/RahulSingh9131/vector/internal/server"
+	"github.com/RahulSingh9131/vector/internal/service"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
@@ -13,7 +14,7 @@ type Middleware struct {
 	RateLimiting    *RateLimitingMiddleware
 }
 
-func NewMiddlewares(s *server.Server) *Middleware {
+func NewMiddlewares(s *server.Server, services *service.Services) *Middleware {
 	// get New relic application instance from server
 	var nrApp *newrelic.Application
 	if s.LoggerService != nil {
@@ -22,7 +23,7 @@ func NewMiddlewares(s *server.Server) *Middleware {
 
 	return &Middleware{
 		Global:          NewGlobalMiddlewares(s),
-		Auth:            NewAuthMiddleware(s),
+		Auth:            NewAuthMiddleware(s, services),
 		ContextEnhancer: NewContextEnhancer(s),
 		Tracing:         NewTracingMiddleware(s, nrApp),
 		RateLimiting:    NewRateLimitingMiddleware(s),

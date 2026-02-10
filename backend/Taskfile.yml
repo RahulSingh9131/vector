@@ -53,7 +53,7 @@ tasks:
         exit 1
       fi
     - echo 'Running up migrations...'
-    - tern migrate -m ./internal/database/migrations --conn-string {{.VECTOR_DB_DSN}}
+    - $(go env GOPATH)/bin/tern migrate -m ./internal/database/migrations --conn-string {{.VECTOR_DB_DSN}}
 
   tidy:
     desc: format all .go files, and tidy and vendor module dependencies

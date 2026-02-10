@@ -1,6 +1,7 @@
--- Write your migrate up statements here
+-- Enable pgcrypto for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 ---- create above / drop below ----
 
--- Write your migrate down statements here. If this migration is irreversible
--- Then delete the separator line above.
+-- Disable pgcrypto
+-- DROP EXTENSION IF EXISTS "pgcrypto";

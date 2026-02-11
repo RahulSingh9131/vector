@@ -90,7 +90,7 @@
         }
       }
     },
-    "/me": {
+    "/api/v1/me": {
       "get": {
         "summary": "Get current user profile",
         "tags": [
@@ -331,7 +331,7 @@
         ]
       }
     },
-    "/organizations": {
+    "/api/v1/organizations": {
       "get": {
         "summary": "List current user's organizations",
         "tags": [
@@ -445,7 +445,7 @@
         ]
       }
     },
-    "/organizations/{id}": {
+    "/api/v1/organizations/{id}": {
       "get": {
         "summary": "Get organization by ID",
         "tags": [
@@ -782,7 +782,7 @@
         ]
       }
     },
-    "/organizations/{id}/members": {
+    "/api/v1/organizations/{id}/members": {
       "get": {
         "summary": "List organization members",
         "tags": [

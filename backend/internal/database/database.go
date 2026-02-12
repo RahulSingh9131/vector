@@ -32,10 +32,10 @@ func (mt *multiTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data
 		if tracer == nil {
 			continue
 		}
-		if tracer, ok := tracer.(interface {
+		if t, ok := tracer.(interface {
 			TraceQueryStart(context.Context, *pgx.Conn, pgx.TraceQueryStartData) context.Context
 		}); ok {
-			return tracer.TraceQueryStart(ctx, conn, data)
+			ctx = t.TraceQueryStart(ctx, conn, data)
 		}
 	}
 	return ctx

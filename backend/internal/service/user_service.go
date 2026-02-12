@@ -111,11 +111,14 @@ func (s *UserService) UpdateProfile(ctx context.Context, id uuid.UUID, params mo
 
 // RecordLogin updates the user's last login timestamp
 func (s *UserService) RecordLogin(ctx context.Context, id uuid.UUID) error {
+	s.server.Logger.Debug().Str("user_id", id.String()).Msg("UserService.RecordLogin starting")
+
 	err := s.userRepo.UpdateLastLogin(ctx, id)
 	if err != nil {
 		s.server.Logger.Error().Err(err).
 			Str("user_id", id.String()).
-			Msg("failed to record login")
+			Str("ctx_err", fmt.Sprintf("%v", ctx.Err())).
+			Msg("failed to record login in database")
 		return fmt.Errorf("failed to record login: %w", err)
 	}
 

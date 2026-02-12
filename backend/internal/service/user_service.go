@@ -145,3 +145,27 @@ func (s *UserService) DeactivateUser(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+// ListUsers retrieves all users
+func (s *UserService) ListUsers(ctx context.Context) ([]models.User, error) {
+	users, err := s.userRepo.List(ctx)
+	if err != nil {
+		s.server.Logger.Error().Err(err).Msg("failed to list users")
+		return nil, sqlerr.HandleError(err)
+	}
+	return users, nil
+}
+
+// CreateUser creates a new user manually
+func (s *UserService) CreateUser(ctx context.Context, params models.CreateUserParams) (*models.User, error) {
+	s.server.Logger.Info().Str("email", params.Email).Msg("creating user manually")
+
+	user, err := s.userRepo.Create(ctx, params)
+	if err != nil {
+		s.server.Logger.Error().Err(err).
+			Str("email", params.Email).
+			Msg("failed to create user")
+		return nil, sqlerr.HandleError(err)
+	}
+
+	return user, nil
+}

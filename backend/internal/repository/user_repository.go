@@ -252,3 +252,41 @@ func (r *UserRepository) GetOrCreate(ctx context.Context, params models.CreateUs
 	// Always fetch the user (whether just inserted or already existed)
 	return r.GetByClerkID(ctx, params.ClerkUserID)
 }
+// List retrieves all users
+func (r *UserRepository) List(ctx context.Context) ([]models.User, error) {
+	query := `
+		SELECT id, clerk_user_id, email, first_name, last_name, avatar_url, 
+		       is_active, last_login_at, created_at, updated_at
+		FROM users
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.server.DB.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var u models.User
+		err := rows.Scan(
+			&u.ID,
+			&u.ClerkUserID,
+			&u.Email,
+			&u.FirstName,
+			&u.LastName,
+			&u.AvatarURL,
+			&u.IsActive,
+			&u.LastLoginAt,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+
+	return users, nil
+}

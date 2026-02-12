@@ -24,8 +24,24 @@ export const UpdateOrganizationSchema = z.object({
     is_active: z.boolean().optional(),
 });
 
+export const CreateOrganizationSchema = z.object({
+    name: z.string().min(1),
+    slug: z.string().min(1),
+    logo_url: z.string().url().optional(),
+});
+
+export const AddMemberSchema = z.object({
+    user_id: z.string().uuid(),
+    role: z.string(),
+});
+
+export const UpdateMemberRoleSchema = z.object({
+    role: z.string(),
+});
+
 export type Organization = z.infer<typeof OrganizationSchema>;
 export type UpdateOrganization = z.infer<typeof UpdateOrganizationSchema>;
+export type CreateOrganization = z.infer<typeof CreateOrganizationSchema>;
 
 export const OrganizationMemberSchema = z.object({
     id: z.string().uuid(),
@@ -43,3 +59,5 @@ export const OrganizationMemberWithDetailsSchema = OrganizationMemberSchema.exte
 
 export type OrganizationMember = z.infer<typeof OrganizationMemberSchema>;
 export type OrganizationMemberWithDetails = z.infer<typeof OrganizationMemberWithDetailsSchema>;
+export type AddMember = z.infer<typeof AddMemberSchema>;
+export type UpdateMemberRole = z.infer<typeof UpdateMemberRoleSchema>;

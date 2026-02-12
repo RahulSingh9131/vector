@@ -303,3 +303,17 @@ func (s *OrganizationService) DeactivateOrganization(ctx context.Context, id uui
 
 	return nil
 }
+// CreateOrganization creates a new organization
+func (s *OrganizationService) CreateOrganization(ctx context.Context, params models.CreateOrganizationParams) (*models.Organization, error) {
+	s.server.Logger.Info().Str("name", params.Name).Msg("creating organization")
+
+	org, err := s.orgRepo.Create(ctx, params)
+	if err != nil {
+		s.server.Logger.Error().Err(err).
+			Str("name", params.Name).
+			Msg("failed to create organization")
+		return nil, sqlerr.HandleError(err)
+	}
+
+	return org, nil
+}

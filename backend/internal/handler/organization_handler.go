@@ -62,9 +62,52 @@ func (h *OrganizationHandler) ListMembers(c echo.Context, req *ListMembersReques
 	return members, nil
 }
 
+// CreateOrganization creates a new organization
+func (h *OrganizationHandler) CreateOrganization(c echo.Context, req *CreateOrganizationRequest) (*models.Organization, error) {
+	return h.services.Organization.CreateOrganization(c.Request().Context(), models.CreateOrganizationParams{
+		Name:    req.Name,
+		Slug:    req.Slug,
+		LogoURL: req.LogoURL,
+	})
+}
+
+// AddMember adds a user to an organization
+func (h *OrganizationHandler) AddMember(c echo.Context, req *AddMemberRequest) (*models.OrganizationMember, error) {
+	orgID, _ := uuid.Parse(req.ID)
+	userID, _ := uuid.Parse(req.UserID)
+
+	return h.services.Organization.AddMember(c.Request().Context(), orgID, userID, req.Role)
+}
+
+// UpdateMemberRole updates a member's role in an organization
+func (h *OrganizationHandler) UpdateMemberRole(c echo.Context, req *UpdateMemberRoleRequest) (*models.OrganizationMember, error) {
+	orgID, _ := uuid.Parse(req.ID)
+	userID, _ := uuid.Parse(req.UserID)
+
+	return h.services.Organization.UpdateMemberRole(c.Request().Context(), orgID, userID, req.Role)
+}
+
+// RemoveMember removes a user from an organization
+func (h *OrganizationHandler) RemoveMember(c echo.Context, req *RemoveMemberRequest) (*EmptyResponse, error) {
+	orgID, _ := uuid.Parse(req.ID)
+	userID, _ := uuid.Parse(req.UserID)
+
+	if err := h.services.Organization.RemoveMember(c.Request().Context(), orgID, userID); err != nil {
+		return nil, err
+	}
+
+	return &EmptyResponse{}, nil
+}
+
 // RegisterRoutes registers all organization routes
 func (h *OrganizationHandler) RegisterRoutes(g *echo.Group) {
 	g.GET("", Handle(h.Handler, h.ListOrganizations, http.StatusOK, &EmptyRequest{}))
+	g.POST("", Handle(h.Handler, h.CreateOrganization, http.StatusCreated, &CreateOrganizationRequest{}))
 	g.GET("/:id", Handle(h.Handler, h.GetOrganization, http.StatusOK, &GetOrganizationRequest{}))
+
+	// Member management
 	g.GET("/:id/members", Handle(h.Handler, h.ListMembers, http.StatusOK, &ListMembersRequest{}))
+	g.POST("/:id/members", Handle(h.Handler, h.AddMember, http.StatusCreated, &AddMemberRequest{}))
+	g.PATCH("/:id/members/:userId", Handle(h.Handler, h.UpdateMemberRole, http.StatusOK, &UpdateMemberRoleRequest{}))
+	g.DELETE("/:id/members/:userId", Handle(h.Handler, h.RemoveMember, http.StatusNoContent, &RemoveMemberRequest{}))
 }

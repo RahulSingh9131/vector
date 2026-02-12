@@ -20,5 +20,14 @@ export const UpdateUserSchema = z.object({
     is_active: z.boolean().optional(),
 });
 
+export const CreateUserSchema = z.object({
+    clerk_user_id: z.string(),
+    email: z.string().email(),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    avatar_url: z.string().url().optional(),
+});
+
 export type User = z.infer<typeof UserSchema>;
 export type UpdateUser = z.infer<typeof UpdateUserSchema>;
+export type CreateUser = z.infer<typeof CreateUserSchema>;

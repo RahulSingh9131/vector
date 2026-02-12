@@ -8,6 +8,7 @@ import (
 	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/RahulSingh9131/vector/internal/sqlerr"
+	clerkOrganization "github.com/clerk/clerk-sdk-go/v2/organization"
 	"github.com/google/uuid"
 )
 
@@ -15,6 +16,7 @@ import (
 var allowedRoles = map[string]bool{
 	"admin":  true,
 	"member": true,
+	"guest":  true,
 }
 
 // OrganizationService handles business logic for organizations
@@ -104,11 +106,39 @@ func (s *OrganizationService) GetByClerkID(ctx context.Context, clerkOrgID strin
 	return org, nil
 }
 
-// UpdateSettings updates organization settings
+// UpdateSettings updates organization settings and syncs to Clerk
 func (s *OrganizationService) UpdateSettings(ctx context.Context, id uuid.UUID, params models.UpdateOrganizationParams) (*models.Organization, error) {
 	s.server.Logger.Debug().
 		Str("org_id", id.String()).
 		Msg("updating organization settings")
+
+	// Get the existing org to find the Clerk ID
+	existingOrg, err := s.orgRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if existingOrg == nil {
+		return nil, errs.NewNotFoundError("Organization not found", false, nil)
+	}
+
+	// Sync name/slug changes to Clerk
+	if existingOrg.ClerkOrgID != "" {
+		updateParams := &clerkOrganization.UpdateParams{}
+		if params.Name != nil {
+			updateParams.Name = params.Name
+		}
+		if params.Slug != nil {
+			updateParams.Slug = params.Slug
+		}
+
+		_, clerkErr := clerkOrganization.Update(ctx, existingOrg.ClerkOrgID, updateParams)
+		if clerkErr != nil {
+			s.server.Logger.Warn().Err(clerkErr).
+				Str("org_id", id.String()).
+				Str("clerk_org_id", existingOrg.ClerkOrgID).
+				Msg("failed to sync organization update to Clerk (continuing with local update)")
+		}
+	}
 
 	org, err := s.orgRepo.Update(ctx, id, params)
 	if err != nil {
@@ -283,13 +313,39 @@ func (s *OrganizationService) GetUserOrganizations(ctx context.Context, userID u
 	return orgs, nil
 }
 
-// DeactivateOrganization soft deletes an organization
+// DeactivateOrganization deactivates an organization locally and deletes from Clerk
 func (s *OrganizationService) DeactivateOrganization(ctx context.Context, id uuid.UUID) error {
 	s.server.Logger.Info().
 		Str("org_id", id.String()).
 		Msg("deactivating organization")
 
-	err := s.orgRepo.Delete(ctx, id)
+	// Get the existing org to find the Clerk ID
+	existingOrg, err := s.orgRepo.GetByID(ctx, id)
+	if err != nil {
+		return sqlerr.HandleError(err)
+	}
+	if existingOrg == nil {
+		return errs.NewNotFoundError("Organization not found", false, nil)
+	}
+
+	// Delete from Clerk first
+	if existingOrg.ClerkOrgID != "" {
+		_, clerkErr := clerkOrganization.Delete(ctx, existingOrg.ClerkOrgID)
+		if clerkErr != nil {
+			s.server.Logger.Error().Err(clerkErr).
+				Str("org_id", id.String()).
+				Str("clerk_org_id", existingOrg.ClerkOrgID).
+				Msg("failed to delete organization from Clerk")
+			return &errs.HTTPError{
+				Code:    "BAD_GATEWAY",
+				Message: "Failed to delete organization from Clerk: " + clerkErr.Error(),
+				Status:  502,
+			}
+		}
+	}
+
+	// Deactivate locally
+	err = s.orgRepo.Delete(ctx, id)
 	if err != nil {
 		s.server.Logger.Error().Err(err).
 			Str("org_id", id.String()).
@@ -303,15 +359,36 @@ func (s *OrganizationService) DeactivateOrganization(ctx context.Context, id uui
 
 	return nil
 }
-// CreateOrganization creates a new organization
+
+// CreateOrganization creates a new organization in Clerk and then in the local DB
 func (s *OrganizationService) CreateOrganization(ctx context.Context, params models.CreateOrganizationParams) (*models.Organization, error) {
 	s.server.Logger.Info().Str("name", params.Name).Msg("creating organization")
 
+	// Step 1: Create in Clerk first so it appears in the dashboard
+	clerkOrg, err := clerkOrganization.Create(ctx, &clerkOrganization.CreateParams{
+		Name: &params.Name,
+		Slug: &params.Slug,
+	})
+	if err != nil {
+		s.server.Logger.Error().Err(err).
+			Str("name", params.Name).
+			Msg("failed to create organization in Clerk")
+		return nil, errs.NewBadRequestError("Failed to create organization in Clerk: "+err.Error(), false, nil, nil, nil)
+	}
+
+	s.server.Logger.Info().
+		Str("clerk_org_id", clerkOrg.ID).
+		Str("name", params.Name).
+		Msg("organization created in Clerk")
+
+	// Step 2: Save to local DB with the Clerk org ID
+	params.ClerkOrgID = clerkOrg.ID
 	org, err := s.orgRepo.Create(ctx, params)
 	if err != nil {
 		s.server.Logger.Error().Err(err).
 			Str("name", params.Name).
-			Msg("failed to create organization")
+			Str("clerk_org_id", clerkOrg.ID).
+			Msg("failed to create organization in database (Clerk org was created)")
 		return nil, sqlerr.HandleError(err)
 	}
 

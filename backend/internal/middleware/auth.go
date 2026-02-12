@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -46,7 +48,7 @@ func (auth *AuthMiddleware) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 						"duration", time.Since(start)).Msg("failed to write JSON response")
 				} else {
 					auth.server.Logger.Error().Str("function", "RequireAuth").Dur("duration", time.Since(start)).Msg(
-						"could not get session claims from context")
+						"clerk authentication failed: invalid or missing token")
 				}
 			}))))(func(c echo.Context) error {
 		start := time.Now()
@@ -57,8 +59,8 @@ func (auth *AuthMiddleware) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 				Str("function", "RequireAuth").
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
-				Msg("could not get session claims from context")
-			return errs.NewUnauthorizedError("Unauthorized", false)
+				Msg("clerk claims missing from context after successful auth wrapper")
+			return errs.NewUnauthorizedError("Unauthorized: claims missing", false)
 		}
 
 		// Get or create user in our database
@@ -76,21 +78,30 @@ func (auth *AuthMiddleware) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 
 		// Record login asynchronously (don't block request)
 		go func() {
-			if err := auth.services.User.RecordLogin(c.Request().Context(), user.ID); err != nil {
+			// Use context.Background() to ensure the background task completes
+			// even after the HTTP request context is canceled.
+			bgCtx := context.Background()
+			
+			auth.server.Logger.Debug().
+				Str("user_id", user.ID.String()).
+				Msg("starting background record login task")
+
+			if err := auth.services.User.RecordLogin(bgCtx, user.ID); err != nil {
 				auth.server.Logger.Warn().
 					Err(err).
 					Str("user_id", user.ID.String()).
-					Msg("failed to record login")
+					Str("ctx_error", fmt.Sprintf("%v", bgCtx.Err())).
+					Msg("failed to record login background task")
 			}
 		}()
 
 		// Attach user and claims to context
-		c.Set("user", user)                                                  // Full user object
-		c.Set("user_id", user.ID)                                            // Internal UUID
-		c.Set("clerk_user_id", claims.Subject)                               // Clerk user ID
-		c.Set("user_role", claims.ActiveOrganizationRole)                    // Clerk org role
-		c.Set("org_id", claims.ActiveOrganizationID)                         // Clerk org ID
-		c.Set("permissions", claims.Claims.ActiveOrganizationPermissions)    // Clerk permissions
+		c.Set("user", user)                                               // Full user object
+		c.Set("user_id", user.ID)                                         // Internal UUID
+		c.Set("clerk_user_id", claims.Subject)                            // Clerk user ID
+		c.Set("user_role", claims.ActiveOrganizationRole)                 // Clerk org role
+		c.Set("org_id", claims.ActiveOrganizationID)                      // Clerk org ID
+		c.Set("permissions", claims.Claims.ActiveOrganizationPermissions) // Clerk permissions
 
 		auth.server.Logger.Info().
 			Str("function", "RequireAuth").

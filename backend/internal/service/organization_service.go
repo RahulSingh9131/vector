@@ -364,6 +364,17 @@ func (s *OrganizationService) DeactivateOrganization(ctx context.Context, id uui
 func (s *OrganizationService) CreateOrganization(ctx context.Context, params models.CreateOrganizationParams) (*models.Organization, error) {
 	s.server.Logger.Info().Str("name", params.Name).Msg("creating organization")
 
+	// Set defaults if not provided
+	if params.SubscriptionTier == "" {
+		params.SubscriptionTier = "free"
+	}
+	if params.MaxMembers == 0 {
+		params.MaxMembers = 10
+	}
+	if params.MaxProjects == 0 {
+		params.MaxProjects = 5
+	}
+
 	// Step 1: Create in Clerk first so it appears in the dashboard
 	clerkOrg, err := clerkOrganization.Create(ctx, &clerkOrganization.CreateParams{
 		Name: &params.Name,

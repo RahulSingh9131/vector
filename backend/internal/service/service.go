@@ -11,17 +11,23 @@ type Services struct {
 	Job          *job.JobService
 	User         *UserService
 	Organization *OrganizationService
+	Project      *ProjectService
+	Issue        *IssueService
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
 	authService := NewAuthService(s)
 	userService := NewUserService(s, repos)
 	organizationService := NewOrganizationService(s, repos)
+	projectService := NewProjectService(s, repos)
+	issueService := NewIssueService(s, repos)
 
 	return &Services{
 		Job:          s.Job,
 		Auth:         authService,
 		User:         userService,
 		Organization: organizationService,
+		Project:      projectService,
+		Issue:        issueService,
 	}, nil
 }

@@ -22,5 +22,13 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		// Organization routes
 		orgs := api.Group("/organizations")
 		h.Organization.RegisterRoutes(orgs)
+
+		// Project routes (nested under organizations)
+		projects := orgs.Group("/:orgId/projects")
+		h.Project.RegisterRoutes(projects)
+
+		// Issue routes (nested under projects)
+		issues := projects.Group("/:projectId/issues")
+		h.Issue.RegisterRoutes(issues)
 	}
 }

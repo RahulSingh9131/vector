@@ -117,6 +117,34 @@ export const UpdateIssueStatusSchema = z.object({
     status: IssueStatusEnum,
 });
 
+// --- Label Schemas ---
+
+export const LabelSchema = z.object({
+    id: z.string().uuid(),
+    project_id: z.string().uuid(),
+    name: z.string(),
+    color: z.string(),
+    description: z.string().nullable(),
+    created_at: z.string(),
+    updated_at: z.string(),
+}).openapi("Label");
+
+export const CreateLabelSchema = z.object({
+    name: z.string().min(1).max(100),
+    color: z.string().length(7).regex(/^#[0-9A-Fa-f]{6}$/),
+    description: z.string().optional(),
+});
+
+export const UpdateLabelSchema = z.object({
+    name: z.string().min(1).max(100).optional(),
+    color: z.string().length(7).regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    description: z.string().optional(),
+});
+
+export const AddLabelToIssueSchema = z.object({
+    label_id: z.string().uuid(),
+});
+
 // --- Type Exports ---
 
 export type Project = z.infer<typeof ProjectSchema>;
@@ -132,3 +160,7 @@ export type CreateIssue = z.infer<typeof CreateIssueSchema>;
 export type UpdateIssue = z.infer<typeof UpdateIssueSchema>;
 export type AssignIssue = z.infer<typeof AssignIssueSchema>;
 export type UpdateIssueStatus = z.infer<typeof UpdateIssueStatusSchema>;
+export type Label = z.infer<typeof LabelSchema>;
+export type CreateLabel = z.infer<typeof CreateLabelSchema>;
+export type UpdateLabel = z.infer<typeof UpdateLabelSchema>;
+export type AddLabelToIssue = z.infer<typeof AddLabelToIssueSchema>;

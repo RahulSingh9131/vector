@@ -13,6 +13,7 @@ type Handlers struct {
 	Webhook      *WebhookHandler
 	Project      *ProjectHandler
 	Issue        *IssueHandler
+	Label        *LabelHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -24,5 +25,7 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Webhook:      NewWebhookHandler(s, services),
 		Project:      NewProjectHandler(s, services),
 		Issue:        NewIssueHandler(s, services),
+		Label:        NewLabelHandler(s, services),
 	}
 }
+

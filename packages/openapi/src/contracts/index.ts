@@ -4,6 +4,7 @@ import { userContract } from "./user.js";
 import { organizationContract } from "./organization.js";
 import { projectContract } from "./project.js";
 import { issueContract } from "./issue.js";
+import { labelContract } from "./label.js";
 
 const c = initContract();
 
@@ -13,6 +14,7 @@ const apiV1 = c.router(
         Organization: organizationContract,
         Project: projectContract,
         Issue: issueContract,
+        Label: labelContract,
     },
     {
         pathPrefix: "/api/v1",
@@ -25,4 +27,5 @@ export const apiContract = c.router({
     Organization: apiV1.Organization,
     Project: apiV1.Project,
     Issue: apiV1.Issue,
+    Label: apiV1.Label,
 });

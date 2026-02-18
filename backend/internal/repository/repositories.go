@@ -9,6 +9,7 @@ type Repositories struct {
 	Project            *ProjectRepository
 	ProjectMember      *ProjectMemberRepository
 	Issue              *IssueRepository
+	Label              *LabelRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -19,5 +20,7 @@ func NewRepositories(s *server.Server) *Repositories {
 		Project:            NewProjectRepository(s),
 		ProjectMember:      NewProjectMemberRepository(s),
 		Issue:              NewIssueRepository(s),
+		Label:              NewLabelRepository(s),
 	}
 }
+

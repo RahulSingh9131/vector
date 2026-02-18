@@ -6,6 +6,9 @@ type Repositories struct {
 	User               *UserRepository
 	Organization       *OrganizationRepository
 	OrganizationMember *OrganizationMemberRepository
+	Project            *ProjectRepository
+	ProjectMember      *ProjectMemberRepository
+	Issue              *IssueRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -13,5 +16,8 @@ func NewRepositories(s *server.Server) *Repositories {
 		User:               NewUserRepository(s),
 		Organization:       NewOrganizationRepository(s),
 		OrganizationMember: NewOrganizationMemberRepository(s),
+		Project:            NewProjectRepository(s),
+		ProjectMember:      NewProjectMemberRepository(s),
+		Issue:              NewIssueRepository(s),
 	}
 }

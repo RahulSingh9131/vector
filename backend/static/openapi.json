@@ -6300,6 +6300,1117 @@
           }
         ]
       }
+    },
+    "/api/v1/organizations/{orgId}/projects/{projectId}/issues/{issueId}/comments": {
+      "post": {
+        "summary": "Create a comment on an issue",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "createComment",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "parent_comment_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "C",
+                  "1": "o",
+                  "2": "m",
+                  "3": "m",
+                  "4": "e",
+                  "5": "n",
+                  "6": "t",
+                  "7": "W",
+                  "8": "i",
+                  "9": "t",
+                  "10": "h",
+                  "11": "A",
+                  "12": "u",
+                  "13": "t",
+                  "14": "h",
+                  "15": "o",
+                  "16": "r",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "issue_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "author_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "body": {
+                      "type": "string"
+                    },
+                    "parent_comment_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "is_edited": {
+                      "type": "boolean"
+                    },
+                    "edited_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "is_deleted": {
+                      "type": "boolean"
+                    },
+                    "deleted_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "author_first_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_last_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_avatar_url": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "issue_id",
+                    "author_id",
+                    "body",
+                    "parent_comment_id",
+                    "is_edited",
+                    "edited_at",
+                    "is_deleted",
+                    "deleted_at",
+                    "created_at",
+                    "updated_at",
+                    "author_first_name",
+                    "author_last_name",
+                    "author_avatar_url",
+                    "author_email"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "List threaded comments for an issue",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "operationId": "listComments",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "0": "C",
+                        "1": "o",
+                        "2": "m",
+                        "3": "m",
+                        "4": "e",
+                        "5": "n",
+                        "6": "t",
+                        "7": "T",
+                        "8": "h",
+                        "9": "r",
+                        "10": "e",
+                        "11": "a",
+                        "12": "d",
+                        "type": "object",
+                        "properties": {
+                          "comment": {
+                            "0": "C",
+                            "1": "o",
+                            "2": "m",
+                            "3": "m",
+                            "4": "e",
+                            "5": "n",
+                            "6": "t",
+                            "7": "W",
+                            "8": "i",
+                            "9": "t",
+                            "10": "h",
+                            "11": "A",
+                            "12": "u",
+                            "13": "t",
+                            "14": "h",
+                            "15": "o",
+                            "16": "r",
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "issue_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "author_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "body": {
+                                "type": "string"
+                              },
+                              "parent_comment_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "is_edited": {
+                                "type": "boolean"
+                              },
+                              "edited_at": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "is_deleted": {
+                                "type": "boolean"
+                              },
+                              "deleted_at": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string"
+                              },
+                              "updated_at": {
+                                "type": "string"
+                              },
+                              "author_first_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "author_last_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "author_avatar_url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "author_email": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "issue_id",
+                              "author_id",
+                              "body",
+                              "parent_comment_id",
+                              "is_edited",
+                              "edited_at",
+                              "is_deleted",
+                              "deleted_at",
+                              "created_at",
+                              "updated_at",
+                              "author_first_name",
+                              "author_last_name",
+                              "author_avatar_url",
+                              "author_email"
+                            ]
+                          },
+                          "replies": {
+                            "type": "array",
+                            "items": {
+                              "0": "C",
+                              "1": "o",
+                              "2": "m",
+                              "3": "m",
+                              "4": "e",
+                              "5": "n",
+                              "6": "t",
+                              "7": "W",
+                              "8": "i",
+                              "9": "t",
+                              "10": "h",
+                              "11": "A",
+                              "12": "u",
+                              "13": "t",
+                              "14": "h",
+                              "15": "o",
+                              "16": "r",
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "issue_id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "author_id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "body": {
+                                  "type": "string"
+                                },
+                                "parent_comment_id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "is_edited": {
+                                  "type": "boolean"
+                                },
+                                "edited_at": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "is_deleted": {
+                                  "type": "boolean"
+                                },
+                                "deleted_at": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "created_at": {
+                                  "type": "string"
+                                },
+                                "updated_at": {
+                                  "type": "string"
+                                },
+                                "author_first_name": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "author_last_name": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "author_avatar_url": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "author_email": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "issue_id",
+                                "author_id",
+                                "body",
+                                "parent_comment_id",
+                                "is_edited",
+                                "edited_at",
+                                "is_deleted",
+                                "deleted_at",
+                                "created_at",
+                                "updated_at",
+                                "author_first_name",
+                                "author_last_name",
+                                "author_avatar_url",
+                                "author_email"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "comment",
+                          "replies"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "totalPages"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/organizations/{orgId}/projects/{projectId}/issues/{issueId}/comments/{commentId}": {
+      "get": {
+        "summary": "Get a single comment",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "getComment",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "C",
+                  "1": "o",
+                  "2": "m",
+                  "3": "m",
+                  "4": "e",
+                  "5": "n",
+                  "6": "t",
+                  "7": "W",
+                  "8": "i",
+                  "9": "t",
+                  "10": "h",
+                  "11": "A",
+                  "12": "u",
+                  "13": "t",
+                  "14": "h",
+                  "15": "o",
+                  "16": "r",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "issue_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "author_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "body": {
+                      "type": "string"
+                    },
+                    "parent_comment_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "is_edited": {
+                      "type": "boolean"
+                    },
+                    "edited_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "is_deleted": {
+                      "type": "boolean"
+                    },
+                    "deleted_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "author_first_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_last_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_avatar_url": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "issue_id",
+                    "author_id",
+                    "body",
+                    "parent_comment_id",
+                    "is_edited",
+                    "edited_at",
+                    "is_deleted",
+                    "deleted_at",
+                    "created_at",
+                    "updated_at",
+                    "author_first_name",
+                    "author_last_name",
+                    "author_avatar_url",
+                    "author_email"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Edit a comment (author only)",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "updateComment",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "C",
+                  "1": "o",
+                  "2": "m",
+                  "3": "m",
+                  "4": "e",
+                  "5": "n",
+                  "6": "t",
+                  "7": "W",
+                  "8": "i",
+                  "9": "t",
+                  "10": "h",
+                  "11": "A",
+                  "12": "u",
+                  "13": "t",
+                  "14": "h",
+                  "15": "o",
+                  "16": "r",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "issue_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "author_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "body": {
+                      "type": "string"
+                    },
+                    "parent_comment_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "is_edited": {
+                      "type": "boolean"
+                    },
+                    "edited_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "is_deleted": {
+                      "type": "boolean"
+                    },
+                    "deleted_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "author_first_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_last_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_avatar_url": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "author_email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "issue_id",
+                    "author_id",
+                    "body",
+                    "parent_comment_id",
+                    "is_edited",
+                    "edited_at",
+                    "is_deleted",
+                    "deleted_at",
+                    "created_at",
+                    "updated_at",
+                    "author_first_name",
+                    "author_last_name",
+                    "author_avatar_url",
+                    "author_email"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Soft-delete a comment (author or project admin)",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "deleteComment",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "204",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {

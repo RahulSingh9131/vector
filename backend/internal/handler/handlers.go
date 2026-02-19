@@ -14,6 +14,7 @@ type Handlers struct {
 	Project      *ProjectHandler
 	Issue        *IssueHandler
 	Label        *LabelHandler
+	Comment      *CommentHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -26,6 +27,8 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Project:      NewProjectHandler(s, services),
 		Issue:        NewIssueHandler(s, services),
 		Label:        NewLabelHandler(s, services),
+		Comment:      NewCommentHandler(s, services),
 	}
 }
+
 

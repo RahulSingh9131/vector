@@ -38,5 +38,9 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		// Issue-label routes (nested under issues)
 		issueLabels := issues.Group("/:issueId/labels")
 		h.Label.RegisterIssueLabelRoutes(issueLabels)
+
+		// Comment routes (nested under issues)
+		comments := issues.Group("/:issueId/comments")
+		h.Comment.RegisterRoutes(comments)
 	}
 }

@@ -145,6 +145,43 @@ export const AddLabelToIssueSchema = z.object({
     label_id: z.string().uuid(),
 });
 
+// --- Comment Schemas ---
+
+export const CommentSchema = z.object({
+    id: z.string().uuid(),
+    issue_id: z.string().uuid(),
+    author_id: z.string().uuid(),
+    body: z.string(),
+    parent_comment_id: z.string().uuid().nullable(),
+    is_edited: z.boolean(),
+    edited_at: z.string().nullable(),
+    is_deleted: z.boolean(),
+    deleted_at: z.string().nullable(),
+    created_at: z.string(),
+    updated_at: z.string(),
+}).openapi("Comment");
+
+export const CommentWithAuthorSchema = CommentSchema.extend({
+    author_first_name: z.string().nullable(),
+    author_last_name: z.string().nullable(),
+    author_avatar_url: z.string().nullable(),
+    author_email: z.string(),
+}).openapi("CommentWithAuthor");
+
+export const CommentThreadSchema = z.object({
+    comment: CommentWithAuthorSchema,
+    replies: z.array(CommentWithAuthorSchema),
+}).openapi("CommentThread");
+
+export const CreateCommentSchema = z.object({
+    body: z.string().min(1),
+    parent_comment_id: z.string().uuid().optional(),
+});
+
+export const UpdateCommentSchema = z.object({
+    body: z.string().min(1),
+});
+
 // --- Type Exports ---
 
 export type Project = z.infer<typeof ProjectSchema>;
@@ -164,3 +201,8 @@ export type Label = z.infer<typeof LabelSchema>;
 export type CreateLabel = z.infer<typeof CreateLabelSchema>;
 export type UpdateLabel = z.infer<typeof UpdateLabelSchema>;
 export type AddLabelToIssue = z.infer<typeof AddLabelToIssueSchema>;
+export type Comment = z.infer<typeof CommentSchema>;
+export type CommentWithAuthor = z.infer<typeof CommentWithAuthorSchema>;
+export type CommentThread = z.infer<typeof CommentThreadSchema>;
+export type CreateComment = z.infer<typeof CreateCommentSchema>;
+export type UpdateComment = z.infer<typeof UpdateCommentSchema>;

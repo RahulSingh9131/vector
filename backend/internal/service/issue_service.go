@@ -42,19 +42,21 @@ var allowedIssueTypes = map[string]bool{
 
 // IssueService handles business logic for issues
 type IssueService struct {
-	server      *server.Server
-	issueRepo   *repository.IssueRepository
-	projectRepo *repository.ProjectRepository
-	memberRepo  *repository.ProjectMemberRepository
+	server       *server.Server
+	issueRepo    *repository.IssueRepository
+	projectRepo  *repository.ProjectRepository
+	memberRepo   *repository.ProjectMemberRepository
+	activityRepo *repository.ActivityRepository
 }
 
 // NewIssueService creates a new issue service
 func NewIssueService(s *server.Server, repos *repository.Repositories) *IssueService {
 	return &IssueService{
-		server:      s,
-		issueRepo:   repos.Issue,
-		projectRepo: repos.Project,
-		memberRepo:  repos.ProjectMember,
+		server:       s,
+		issueRepo:    repos.Issue,
+		projectRepo:  repos.Project,
+		memberRepo:   repos.ProjectMember,
+		activityRepo: repos.Activity,
 	}
 }
 
@@ -144,6 +146,22 @@ func (s *IssueService) CreateIssue(ctx context.Context, projectID, reporterID uu
 		Str("project_id", projectID.String()).
 		Msg("issue created successfully")
 
+	// Record activity
+	s.recordActivity(ctx, models.CreateActivityParams{
+		ProjectID:  projectID,
+		IssueID:    &issue.ID,
+		ActorID:    reporterID,
+		Action:     "issue.created",
+		EntityType: "issue",
+		EntityID:   issue.ID,
+		NewValue: map[string]interface{}{
+			"title":    issue.Title,
+			"status":   issue.Status,
+			"priority": issue.Priority,
+			"type":     issue.Type,
+		},
+	})
+
 	return issue, nil
 }
 
@@ -200,7 +218,7 @@ func (s *IssueService) ListIssues(ctx context.Context, projectID uuid.UUID, filt
 }
 
 // UpdateIssue updates an issue
-func (s *IssueService) UpdateIssue(ctx context.Context, issueID uuid.UUID, params models.UpdateIssueParams) (*models.Issue, error) {
+func (s *IssueService) UpdateIssue(ctx context.Context, issueID, actorID uuid.UUID, params models.UpdateIssueParams) (*models.Issue, error) {
 	s.server.Logger.Debug().
 		Str("issue_id", issueID.String()).
 		Msg("updating issue")
@@ -235,20 +253,20 @@ func (s *IssueService) UpdateIssue(ctx context.Context, issueID uuid.UUID, param
 		)
 	}
 
+	// Fetch existing issue for activity tracking and validation
+	existingIssue, err := s.issueRepo.GetByID(ctx, issueID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if existingIssue == nil {
+		return nil, errs.NewNotFoundError("Issue not found", false, nil)
+	}
+
 	// Validate assignee is a project member (if changing assignee)
 	if params.AssigneeID != nil {
-		// Get the issue to find its project
-		existingIssue, err := s.issueRepo.GetByID(ctx, issueID)
-		if err != nil {
-			return nil, sqlerr.HandleError(err)
-		}
-		if existingIssue == nil {
-			return nil, errs.NewNotFoundError("Issue not found", false, nil)
-		}
-
-		member, err := s.memberRepo.GetMember(ctx, existingIssue.ProjectID, *params.AssigneeID)
-		if err != nil {
-			return nil, sqlerr.HandleError(err)
+		member, memberErr := s.memberRepo.GetMember(ctx, existingIssue.ProjectID, *params.AssigneeID)
+		if memberErr != nil {
+			return nil, sqlerr.HandleError(memberErr)
 		}
 		if member == nil {
 			return nil, errs.NewBadRequestError(
@@ -258,6 +276,26 @@ func (s *IssueService) UpdateIssue(ctx context.Context, issueID uuid.UUID, param
 				nil,
 			)
 		}
+	}
+
+	// Build old/new values for activity tracking
+	oldValue := map[string]interface{}{}
+	newValue := map[string]interface{}{}
+	if params.Title != nil {
+		oldValue["title"] = existingIssue.Title
+		newValue["title"] = *params.Title
+	}
+	if params.Status != nil {
+		oldValue["status"] = existingIssue.Status
+		newValue["status"] = *params.Status
+	}
+	if params.Priority != nil {
+		oldValue["priority"] = existingIssue.Priority
+		newValue["priority"] = *params.Priority
+	}
+	if params.Type != nil {
+		oldValue["type"] = existingIssue.Type
+		newValue["type"] = *params.Type
 	}
 
 	issue, err := s.issueRepo.Update(ctx, issueID, params)
@@ -272,11 +310,25 @@ func (s *IssueService) UpdateIssue(ctx context.Context, issueID uuid.UUID, param
 		Str("issue_id", issueID.String()).
 		Msg("issue updated successfully")
 
+	// Record activity
+	if len(oldValue) > 0 {
+		s.recordActivity(ctx, models.CreateActivityParams{
+			ProjectID:  existingIssue.ProjectID,
+			IssueID:    &issueID,
+			ActorID:    actorID,
+			Action:     "issue.updated",
+			EntityType: "issue",
+			EntityID:   issueID,
+			OldValue:   oldValue,
+			NewValue:   newValue,
+		})
+	}
+
 	return issue, nil
 }
 
 // AssignIssue assigns or unassigns an issue
-func (s *IssueService) AssignIssue(ctx context.Context, issueID uuid.UUID, assigneeID *uuid.UUID) (*models.Issue, error) {
+func (s *IssueService) AssignIssue(ctx context.Context, issueID, actorID uuid.UUID, assigneeID *uuid.UUID) (*models.Issue, error) {
 	s.server.Logger.Debug().
 		Str("issue_id", issueID.String()).
 		Msg("assigning issue")
@@ -320,11 +372,29 @@ func (s *IssueService) AssignIssue(ctx context.Context, issueID uuid.UUID, assig
 		Str("issue_id", issueID.String()).
 		Msg("issue assigned successfully")
 
+	// Record activity
+	action := "issue.assigned"
+	if assigneeID == nil {
+		action = "issue.unassigned"
+	}
+	oldAssignee := map[string]interface{}{"assignee_id": existingIssue.AssigneeID}
+	newAssignee := map[string]interface{}{"assignee_id": assigneeID}
+	s.recordActivity(ctx, models.CreateActivityParams{
+		ProjectID:  existingIssue.ProjectID,
+		IssueID:    &issueID,
+		ActorID:    actorID,
+		Action:     action,
+		EntityType: "issue",
+		EntityID:   issueID,
+		OldValue:   oldAssignee,
+		NewValue:   newAssignee,
+	})
+
 	return issue, nil
 }
 
 // UpdateStatus updates an issue's status
-func (s *IssueService) UpdateStatus(ctx context.Context, issueID uuid.UUID, status string) (*models.Issue, error) {
+func (s *IssueService) UpdateStatus(ctx context.Context, issueID, actorID uuid.UUID, status string) (*models.Issue, error) {
 	s.server.Logger.Debug().
 		Str("issue_id", issueID.String()).
 		Str("status", status).
@@ -337,6 +407,15 @@ func (s *IssueService) UpdateStatus(ctx context.Context, issueID uuid.UUID, stat
 			[]errs.FieldError{{Field: "status", Error: "must be one of: backlog, todo, in_progress, in_review, in_dev, in_prod, cancelled"}},
 			nil,
 		)
+	}
+
+	// Fetch existing issue for activity tracking
+	existingIssue, err := s.issueRepo.GetByID(ctx, issueID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if existingIssue == nil {
+		return nil, errs.NewNotFoundError("Issue not found", false, nil)
 	}
 
 	issue, err := s.issueRepo.Update(ctx, issueID, models.UpdateIssueParams{
@@ -354,14 +433,35 @@ func (s *IssueService) UpdateStatus(ctx context.Context, issueID uuid.UUID, stat
 		Str("status", status).
 		Msg("issue status updated successfully")
 
+	// Record activity
+	s.recordActivity(ctx, models.CreateActivityParams{
+		ProjectID:  existingIssue.ProjectID,
+		IssueID:    &issueID,
+		ActorID:    actorID,
+		Action:     "issue.status_changed",
+		EntityType: "issue",
+		EntityID:   issueID,
+		OldValue:   map[string]interface{}{"status": existingIssue.Status},
+		NewValue:   map[string]interface{}{"status": status},
+	})
+
 	return issue, nil
 }
 
 // DeleteIssue deletes an issue
-func (s *IssueService) DeleteIssue(ctx context.Context, issueID uuid.UUID) error {
+func (s *IssueService) DeleteIssue(ctx context.Context, issueID, actorID uuid.UUID) error {
 	s.server.Logger.Debug().
 		Str("issue_id", issueID.String()).
 		Msg("deleting issue")
+
+	// Fetch issue for activity metadata before deleting
+	existingIssue, err := s.issueRepo.GetByID(ctx, issueID)
+	if err != nil {
+		return sqlerr.HandleError(err)
+	}
+	if existingIssue == nil {
+		return errs.NewNotFoundError("Issue not found", false, nil)
+	}
 
 	if err := s.issueRepo.Delete(ctx, issueID); err != nil {
 		s.server.Logger.Error().Err(err).
@@ -374,5 +474,24 @@ func (s *IssueService) DeleteIssue(ctx context.Context, issueID uuid.UUID) error
 		Str("issue_id", issueID.String()).
 		Msg("issue deleted successfully")
 
+	// Record activity (issue_id is null since the issue is deleted)
+	s.recordActivity(ctx, models.CreateActivityParams{
+		ProjectID:  existingIssue.ProjectID,
+		ActorID:    actorID,
+		Action:     "issue.deleted",
+		EntityType: "issue",
+		EntityID:   issueID,
+		Metadata:   map[string]interface{}{"title": existingIssue.Title, "issue_key": existingIssue.IssueKey},
+	})
+
 	return nil
+}
+
+// recordActivity is a helper that logs errors but doesn't propagate them
+func (s *IssueService) recordActivity(ctx context.Context, params models.CreateActivityParams) {
+	if _, err := s.activityRepo.Create(ctx, params); err != nil {
+		s.server.Logger.Error().Err(err).
+			Str("action", params.Action).
+			Msg("failed to record activity")
+	}
 }

@@ -1,3 +1,4 @@
+// Package router defines the HTTP route registrations for the API.
 package router
 
 import (
@@ -42,5 +43,13 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		// Comment routes (nested under issues)
 		comments := issues.Group("/:issueId/comments")
 		h.Comment.RegisterRoutes(comments)
+
+		// Issue activity timeline (nested under issues)
+		issueActivity := issues.Group("/:issueId/activity")
+		h.Activity.RegisterIssueRoutes(issueActivity)
+
+		// Project activity feed (nested under projects)
+		projectActivity := projects.Group("/:projectId/activity")
+		h.Activity.RegisterProjectRoutes(projectActivity)
 	}
 }

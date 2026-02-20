@@ -490,3 +490,30 @@ type DeleteCommentRequest struct {
 func (r *DeleteCommentRequest) Validate() error {
 	return validate.Struct(r)
 }
+
+// --- Activity Request Structs ---
+
+// ListIssueActivityRequest represents query params for listing issue activity
+type ListIssueActivityRequest struct {
+	OrgID     string `param:"orgId" validate:"required,uuid"`
+	ProjectID string `param:"projectId" validate:"required,uuid"`
+	IssueID   string `param:"issueId" validate:"required,uuid"`
+	Page      int    `query:"page" validate:"omitempty,min=1"`
+	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+}
+
+func (r *ListIssueActivityRequest) Validate() error {
+	return validate.Struct(r)
+}
+
+// ListProjectActivityRequest represents query params for listing project activity
+type ListProjectActivityRequest struct {
+	OrgID     string `param:"orgId" validate:"required,uuid"`
+	ProjectID string `param:"projectId" validate:"required,uuid"`
+	Page      int    `query:"page" validate:"omitempty,min=1"`
+	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+}
+
+func (r *ListProjectActivityRequest) Validate() error {
+	return validate.Struct(r)
+}

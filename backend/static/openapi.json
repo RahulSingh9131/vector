@@ -7411,6 +7411,360 @@
           }
         ]
       }
+    },
+    "/api/v1/organizations/{orgId}/projects/{projectId}/issues/{issueId}/activity": {
+      "get": {
+        "summary": "List issue activity timeline",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "operationId": "listIssueActivity",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "0": "A",
+                        "1": "c",
+                        "2": "t",
+                        "3": "i",
+                        "4": "v",
+                        "5": "i",
+                        "6": "t",
+                        "7": "y",
+                        "8": "W",
+                        "9": "i",
+                        "10": "t",
+                        "11": "h",
+                        "12": "A",
+                        "13": "c",
+                        "14": "t",
+                        "15": "o",
+                        "16": "r",
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "project_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "issue_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "actor_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "entity_type": {
+                            "type": "string"
+                          },
+                          "entity_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "old_value": {
+                            "nullable": true
+                          },
+                          "new_value": {
+                            "nullable": true
+                          },
+                          "metadata": {
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "actor_first_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "actor_last_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "actor_avatar_url": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "actor_email": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "project_id",
+                          "issue_id",
+                          "actor_id",
+                          "action",
+                          "entity_type",
+                          "entity_id",
+                          "created_at",
+                          "actor_first_name",
+                          "actor_last_name",
+                          "actor_avatar_url",
+                          "actor_email"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "total_pages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "total_pages"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{orgId}/projects/{projectId}/activity": {
+      "get": {
+        "summary": "List project activity feed",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "operationId": "listProjectActivity",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "0": "A",
+                        "1": "c",
+                        "2": "t",
+                        "3": "i",
+                        "4": "v",
+                        "5": "i",
+                        "6": "t",
+                        "7": "y",
+                        "8": "W",
+                        "9": "i",
+                        "10": "t",
+                        "11": "h",
+                        "12": "A",
+                        "13": "c",
+                        "14": "t",
+                        "15": "o",
+                        "16": "r",
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "project_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "issue_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "actor_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "entity_type": {
+                            "type": "string"
+                          },
+                          "entity_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "old_value": {
+                            "nullable": true
+                          },
+                          "new_value": {
+                            "nullable": true
+                          },
+                          "metadata": {
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "actor_first_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "actor_last_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "actor_avatar_url": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "actor_email": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "project_id",
+                          "issue_id",
+                          "actor_id",
+                          "action",
+                          "entity_type",
+                          "entity_id",
+                          "created_at",
+                          "actor_first_name",
+                          "actor_last_name",
+                          "actor_avatar_url",
+                          "actor_email"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "total_pages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "total_pages"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "info": {

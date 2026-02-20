@@ -6,6 +6,7 @@ import { projectContract } from "./project.js";
 import { issueContract } from "./issue.js";
 import { labelContract } from "./label.js";
 import { commentContract } from "./comment.js";
+import { activityContract } from "./activity.js";
 
 const c = initContract();
 
@@ -17,6 +18,7 @@ const apiV1 = c.router(
         Issue: issueContract,
         Label: labelContract,
         Comment: commentContract,
+        Activity: activityContract,
     },
     {
         pathPrefix: "/api/v1",
@@ -31,4 +33,5 @@ export const apiContract = c.router({
     Issue: apiV1.Issue,
     Label: apiV1.Label,
     Comment: apiV1.Comment,
+    Activity: apiV1.Activity,
 });

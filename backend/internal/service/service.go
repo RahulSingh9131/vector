@@ -15,6 +15,7 @@ type Services struct {
 	Issue        *IssueService
 	Label        *LabelService
 	Comment      *CommentService
+	Activity     *ActivityService
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
@@ -25,6 +26,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 	issueService := NewIssueService(s, repos)
 	labelService := NewLabelService(s, repos)
 	commentService := NewCommentService(s, repos)
+	activityService := NewActivityService(s, repos)
 
 	return &Services{
 		Job:          s.Job,
@@ -35,7 +37,9 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 		Issue:        issueService,
 		Label:        labelService,
 		Comment:      commentService,
+		Activity:     activityService,
 	}, nil
 }
+
 
 

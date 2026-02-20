@@ -86,6 +86,10 @@ func (h *IssueHandler) GetIssue(c echo.Context, req *GetIssueRequest) (*models.I
 // UpdateIssue updates an issue
 func (h *IssueHandler) UpdateIssue(c echo.Context, req *UpdateIssueRequest) (*models.Issue, error) {
 	issueID, _ := uuid.Parse(req.IssueID)
+	userID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
 	params := models.UpdateIssueParams{
 		Title:       req.Title,
@@ -111,14 +115,18 @@ func (h *IssueHandler) UpdateIssue(c echo.Context, req *UpdateIssueRequest) (*mo
 		params.DueDate = t
 	}
 
-	return h.services.Issue.UpdateIssue(c.Request().Context(), issueID, params)
+	return h.services.Issue.UpdateIssue(c.Request().Context(), issueID, userID, params)
 }
 
 // DeleteIssue deletes an issue
 func (h *IssueHandler) DeleteIssue(c echo.Context, req *DeleteIssueRequest) (*EmptyResponse, error) {
 	issueID, _ := uuid.Parse(req.IssueID)
+	userID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	if err := h.services.Issue.DeleteIssue(c.Request().Context(), issueID); err != nil {
+	if err := h.services.Issue.DeleteIssue(c.Request().Context(), issueID, userID); err != nil {
 		return nil, err
 	}
 
@@ -128,6 +136,10 @@ func (h *IssueHandler) DeleteIssue(c echo.Context, req *DeleteIssueRequest) (*Em
 // AssignIssue assigns or unassigns an issue
 func (h *IssueHandler) AssignIssue(c echo.Context, req *AssignIssueRequest) (*models.Issue, error) {
 	issueID, _ := uuid.Parse(req.IssueID)
+	userID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
 	var assigneeID *uuid.UUID
 	if req.AssigneeID != nil {
@@ -135,14 +147,18 @@ func (h *IssueHandler) AssignIssue(c echo.Context, req *AssignIssueRequest) (*mo
 		assigneeID = &id
 	}
 
-	return h.services.Issue.AssignIssue(c.Request().Context(), issueID, assigneeID)
+	return h.services.Issue.AssignIssue(c.Request().Context(), issueID, userID, assigneeID)
 }
 
 // UpdateIssueStatus updates an issue's status
 func (h *IssueHandler) UpdateIssueStatus(c echo.Context, req *UpdateIssueStatusRequest) (*models.Issue, error) {
 	issueID, _ := uuid.Parse(req.IssueID)
+	userID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	return h.services.Issue.UpdateStatus(c.Request().Context(), issueID, req.Status)
+	return h.services.Issue.UpdateStatus(c.Request().Context(), issueID, userID, req.Status)
 }
 
 // RegisterRoutes registers all issue routes

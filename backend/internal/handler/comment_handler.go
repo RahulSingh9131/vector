@@ -74,12 +74,13 @@ func (h *CommentHandler) UpdateComment(c echo.Context, req *UpdateCommentRequest
 func (h *CommentHandler) DeleteComment(c echo.Context, req *DeleteCommentRequest) (*EmptyResponse, error) {
 	commentID, _ := uuid.Parse(req.CommentID)
 	projectID, _ := uuid.Parse(req.ProjectID)
+	issueID, _ := uuid.Parse(req.IssueID)
 	userID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok {
 		return nil, errs.NewInternalServerError()
 	}
 
-	if err := h.services.Comment.DeleteComment(c.Request().Context(), commentID, userID, projectID); err != nil {
+	if err := h.services.Comment.DeleteComment(c.Request().Context(), commentID, userID, projectID, issueID); err != nil {
 		return nil, err
 	}
 

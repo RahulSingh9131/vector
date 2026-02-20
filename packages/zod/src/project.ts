@@ -182,6 +182,29 @@ export const UpdateCommentSchema = z.object({
     body: z.string().min(1),
 });
 
+// --- Activity Schemas ---
+
+export const ActivitySchema = z.object({
+    id: z.string().uuid(),
+    project_id: z.string().uuid(),
+    issue_id: z.string().uuid().nullable(),
+    actor_id: z.string().uuid(),
+    action: z.string(),
+    entity_type: z.string(),
+    entity_id: z.string().uuid(),
+    old_value: z.any().nullable(),
+    new_value: z.any().nullable(),
+    metadata: z.any().nullable(),
+    created_at: z.string().datetime(),
+}).openapi("Activity");
+
+export const ActivityWithActorSchema = ActivitySchema.extend({
+    actor_first_name: z.string().nullable(),
+    actor_last_name: z.string().nullable(),
+    actor_avatar_url: z.string().nullable(),
+    actor_email: z.string(),
+}).openapi("ActivityWithActor");
+
 // --- Type Exports ---
 
 export type Project = z.infer<typeof ProjectSchema>;
@@ -206,3 +229,5 @@ export type CommentWithAuthor = z.infer<typeof CommentWithAuthorSchema>;
 export type CommentThread = z.infer<typeof CommentThreadSchema>;
 export type CreateComment = z.infer<typeof CreateCommentSchema>;
 export type UpdateComment = z.infer<typeof UpdateCommentSchema>;
+export type Activity = z.infer<typeof ActivitySchema>;
+export type ActivityWithActor = z.infer<typeof ActivityWithActorSchema>;

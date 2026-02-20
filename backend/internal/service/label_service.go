@@ -16,17 +16,19 @@ var hexColorRegex = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 
 // LabelService handles business logic for labels
 type LabelService struct {
-	server    *server.Server
-	labelRepo *repository.LabelRepository
-	issueRepo *repository.IssueRepository
+	server       *server.Server
+	labelRepo    *repository.LabelRepository
+	issueRepo    *repository.IssueRepository
+	activityRepo *repository.ActivityRepository
 }
 
 // NewLabelService creates a new label service
 func NewLabelService(s *server.Server, repos *repository.Repositories) *LabelService {
 	return &LabelService{
-		server:    s,
-		labelRepo: repos.Label,
-		issueRepo: repos.Issue,
+		server:       s,
+		labelRepo:    repos.Label,
+		issueRepo:    repos.Issue,
+		activityRepo: repos.Activity,
 	}
 }
 
@@ -145,7 +147,7 @@ func (s *LabelService) DeleteLabel(ctx context.Context, labelID uuid.UUID) error
 }
 
 // AddLabelToIssue attaches a label to an issue
-func (s *LabelService) AddLabelToIssue(ctx context.Context, issueID, labelID uuid.UUID) error {
+func (s *LabelService) AddLabelToIssue(ctx context.Context, issueID, labelID, actorID uuid.UUID) error {
 	s.server.Logger.Debug().
 		Str("issue_id", issueID.String()).
 		Str("label_id", labelID.String()).
@@ -189,15 +191,30 @@ func (s *LabelService) AddLabelToIssue(ctx context.Context, issueID, labelID uui
 		Str("label_id", labelID.String()).
 		Msg("label added to issue successfully")
 
+	// Record activity
+	s.recordActivity(ctx, models.CreateActivityParams{
+		ProjectID:  issue.ProjectID,
+		IssueID:    &issueID,
+		ActorID:    actorID,
+		Action:     "label.added",
+		EntityType: "label",
+		EntityID:   labelID,
+		Metadata:   map[string]interface{}{"label_name": label.Name, "label_color": label.Color},
+	})
+
 	return nil
 }
 
 // RemoveLabelFromIssue removes a label from an issue
-func (s *LabelService) RemoveLabelFromIssue(ctx context.Context, issueID, labelID uuid.UUID) error {
+func (s *LabelService) RemoveLabelFromIssue(ctx context.Context, issueID, labelID, actorID uuid.UUID) error {
 	s.server.Logger.Debug().
 		Str("issue_id", issueID.String()).
 		Str("label_id", labelID.String()).
 		Msg("removing label from issue")
+
+	// Fetch label and issue metadata before removing
+	label, _ := s.labelRepo.GetByID(ctx, labelID)
+	issue, _ := s.issueRepo.GetByID(ctx, issueID)
 
 	if err := s.labelRepo.RemoveLabelFromIssue(ctx, issueID, labelID); err != nil {
 		s.server.Logger.Error().Err(err).
@@ -211,6 +228,24 @@ func (s *LabelService) RemoveLabelFromIssue(ctx context.Context, issueID, labelI
 		Str("issue_id", issueID.String()).
 		Str("label_id", labelID.String()).
 		Msg("label removed from issue successfully")
+
+	// Record activity
+	if issue != nil {
+		metadata := map[string]interface{}{}
+		if label != nil {
+			metadata["label_name"] = label.Name
+			metadata["label_color"] = label.Color
+		}
+		s.recordActivity(ctx, models.CreateActivityParams{
+			ProjectID:  issue.ProjectID,
+			IssueID:    &issueID,
+			ActorID:    actorID,
+			Action:     "label.removed",
+			EntityType: "label",
+			EntityID:   labelID,
+			Metadata:   metadata,
+		})
+	}
 
 	return nil
 }
@@ -226,4 +261,13 @@ func (s *LabelService) GetLabelsByIssue(ctx context.Context, issueID uuid.UUID) 
 	}
 
 	return labels, nil
+}
+
+// recordActivity is a helper that logs errors but doesn't propagate them
+func (s *LabelService) recordActivity(ctx context.Context, params models.CreateActivityParams) {
+	if _, err := s.activityRepo.Create(ctx, params); err != nil {
+		s.server.Logger.Error().Err(err).
+			Str("action", params.Action).
+			Msg("failed to record activity")
+	}
 }

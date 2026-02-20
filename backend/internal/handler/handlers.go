@@ -1,3 +1,4 @@
+// Package handler provides HTTP request handlers for the Vector API.
 package handler
 
 import (
@@ -15,6 +16,7 @@ type Handlers struct {
 	Issue        *IssueHandler
 	Label        *LabelHandler
 	Comment      *CommentHandler
+	Activity     *ActivityHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -28,7 +30,9 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Issue:        NewIssueHandler(s, services),
 		Label:        NewLabelHandler(s, services),
 		Comment:      NewCommentHandler(s, services),
+		Activity:     NewActivityHandler(s, services),
 	}
 }
+
 
 

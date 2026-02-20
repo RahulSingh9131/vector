@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/RahulSingh9131/vector/internal/service"
@@ -80,8 +81,12 @@ func (h *LabelHandler) GetIssueLabels(c echo.Context, req *GetIssueLabelsRequest
 func (h *LabelHandler) AddLabelToIssue(c echo.Context, req *AddLabelToIssueRequest) (*EmptyResponse, error) {
 	issueID, _ := uuid.Parse(req.IssueID)
 	labelID, _ := uuid.Parse(req.LabelID)
+	userID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	if err := h.services.Label.AddLabelToIssue(c.Request().Context(), issueID, labelID); err != nil {
+	if err := h.services.Label.AddLabelToIssue(c.Request().Context(), issueID, labelID, userID); err != nil {
 		return nil, err
 	}
 
@@ -92,8 +97,12 @@ func (h *LabelHandler) AddLabelToIssue(c echo.Context, req *AddLabelToIssueReque
 func (h *LabelHandler) RemoveLabelFromIssue(c echo.Context, req *RemoveLabelFromIssueRequest) (*EmptyResponse, error) {
 	issueID, _ := uuid.Parse(req.IssueID)
 	labelID, _ := uuid.Parse(req.LabelID)
+	userID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	if err := h.services.Label.RemoveLabelFromIssue(c.Request().Context(), issueID, labelID); err != nil {
+	if err := h.services.Label.RemoveLabelFromIssue(c.Request().Context(), issueID, labelID, userID); err != nil {
 		return nil, err
 	}
 

@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type BaseWithId struct {
+type BaseWithID struct {
 	ID uuid.UUID `json:"id" db:"id"`
 }
 
@@ -19,7 +19,7 @@ type BaseWithUpdatedAt struct {
 }
 
 type Base struct {
-	BaseWithId
+	BaseWithID
 	BaseWithCreatedAt
 	BaseWithUpdatedAt
 }

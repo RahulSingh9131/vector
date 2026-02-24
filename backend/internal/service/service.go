@@ -27,7 +27,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 	authService := NewAuthService(s)
 	userService := NewUserService(s, repos)
 	organizationService := NewOrganizationService(s, repos)
-	projectService := NewProjectService(s, repos)
+	projectService := NewProjectService(s, repos, eventPublisher)
 	issueService := NewIssueService(s, repos, eventPublisher)
 	labelService := NewLabelService(s, repos, eventPublisher)
 	commentService := NewCommentService(s, repos, eventPublisher)

@@ -169,6 +169,64 @@ func (s *ActivitySubscriber) mapToActivity(event DomainEvent) (*models.CreateAct
 		base.EntityID = p.LabelID
 		base.OldValue = map[string]interface{}{"label_name": p.LabelName, "color": p.Color}
 
+	case "project.created":
+		var p ProjectCreatedPayload
+		if err := json.Unmarshal(event.Payload, &p); err != nil {
+			return nil, err
+		}
+		base.EntityType = "project"
+		base.EntityID = p.ProjectID
+		base.NewValue = map[string]interface{}{
+			"name":       p.Name,
+			"identifier": p.Identifier,
+		}
+
+	case "project.updated":
+		var p ProjectUpdatedPayload
+		if err := json.Unmarshal(event.Payload, &p); err != nil {
+			return nil, err
+		}
+		base.EntityType = "project"
+		base.EntityID = p.ProjectID
+		base.OldValue = p.OldValue
+		base.NewValue = p.NewValue
+
+	case "project.deleted":
+		var p ProjectDeletedPayload
+		if err := json.Unmarshal(event.Payload, &p); err != nil {
+			return nil, err
+		}
+		base.EntityType = "project"
+		base.EntityID = p.ProjectID
+		base.Metadata = map[string]interface{}{"name": p.Name, "identifier": p.Identifier}
+
+	case "member.added":
+		var p MemberAddedPayload
+		if err := json.Unmarshal(event.Payload, &p); err != nil {
+			return nil, err
+		}
+		base.EntityType = "member"
+		base.EntityID = p.UserID
+		base.NewValue = map[string]interface{}{"role": p.Role}
+
+	case "member.removed":
+		var p MemberRemovedPayload
+		if err := json.Unmarshal(event.Payload, &p); err != nil {
+			return nil, err
+		}
+		base.EntityType = "member"
+		base.EntityID = p.UserID
+
+	case "member.role_changed":
+		var p MemberRoleChangedPayload
+		if err := json.Unmarshal(event.Payload, &p); err != nil {
+			return nil, err
+		}
+		base.EntityType = "member"
+		base.EntityID = p.UserID
+		base.OldValue = map[string]interface{}{"role": p.OldRole}
+		base.NewValue = map[string]interface{}{"role": p.NewRole}
+
 	default:
 		return nil, fmt.Errorf("unknown event type: %s", event.Type)
 	}

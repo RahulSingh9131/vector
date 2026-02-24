@@ -105,3 +105,37 @@ func (p *EventPublisher) LabelAdded(ctx context.Context, projectID, actorID uuid
 func (p *EventPublisher) LabelRemoved(ctx context.Context, projectID, actorID uuid.UUID, payload LabelRemovedPayload) {
 	p.publish(ctx, "label.removed", projectID, actorID, payload)
 }
+
+// --- Project Events ---
+
+// ProjectCreated publishes a project.created event.
+func (p *EventPublisher) ProjectCreated(ctx context.Context, projectID, actorID uuid.UUID, payload ProjectCreatedPayload) {
+	p.publish(ctx, "project.created", projectID, actorID, payload)
+}
+
+// ProjectUpdated publishes a project.updated event.
+func (p *EventPublisher) ProjectUpdated(ctx context.Context, projectID, actorID uuid.UUID, payload ProjectUpdatedPayload) {
+	p.publish(ctx, "project.updated", projectID, actorID, payload)
+}
+
+// ProjectDeleted publishes a project.deleted event.
+func (p *EventPublisher) ProjectDeleted(ctx context.Context, projectID, actorID uuid.UUID, payload ProjectDeletedPayload) {
+	p.publish(ctx, "project.deleted", projectID, actorID, payload)
+}
+
+// --- Member Events ---
+
+// MemberAdded publishes a member.added event.
+func (p *EventPublisher) MemberAdded(ctx context.Context, projectID, actorID uuid.UUID, payload MemberAddedPayload) {
+	p.publish(ctx, "member.added", projectID, actorID, payload)
+}
+
+// MemberRemoved publishes a member.removed event.
+func (p *EventPublisher) MemberRemoved(ctx context.Context, projectID, actorID uuid.UUID, payload MemberRemovedPayload) {
+	p.publish(ctx, "member.removed", projectID, actorID, payload)
+}
+
+// MemberRoleChanged publishes a member.role_changed event.
+func (p *EventPublisher) MemberRoleChanged(ctx context.Context, projectID, actorID uuid.UUID, payload MemberRoleChangedPayload) {
+	p.publish(ctx, "member.role_changed", projectID, actorID, payload)
+}

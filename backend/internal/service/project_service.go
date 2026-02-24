@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/RahulSingh9131/vector/internal/errs"
+	"github.com/RahulSingh9131/vector/internal/events"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -32,16 +33,18 @@ type ProjectService struct {
 	memberRepo    *repository.ProjectMemberRepository
 	orgRepo       *repository.OrganizationRepository
 	orgMemberRepo *repository.OrganizationMemberRepository
+	events        *events.EventPublisher
 }
 
 // NewProjectService creates a new project service
-func NewProjectService(s *server.Server, repos *repository.Repositories) *ProjectService {
+func NewProjectService(s *server.Server, repos *repository.Repositories, ep *events.EventPublisher) *ProjectService {
 	return &ProjectService{
 		server:        s,
 		projectRepo:   repos.Project,
 		memberRepo:    repos.ProjectMember,
 		orgRepo:       repos.Organization,
 		orgMemberRepo: repos.OrganizationMember,
+		events:        ep,
 	}
 }
 
@@ -111,6 +114,14 @@ func (s *ProjectService) CreateProject(ctx context.Context, orgID, userID uuid.U
 		Str("name", params.Name).
 		Msg("project created successfully")
 
+	// Emit event
+	s.events.ProjectCreated(ctx, project.ID, userID, events.ProjectCreatedPayload{
+		ProjectID:  project.ID,
+		Name:       project.Name,
+		Identifier: project.Identifier,
+		OrgID:      orgID,
+	})
+
 	return project, nil
 }
 
@@ -142,7 +153,7 @@ func (s *ProjectService) ListProjects(ctx context.Context, orgID, userID uuid.UU
 }
 
 // UpdateProject updates a project's information
-func (s *ProjectService) UpdateProject(ctx context.Context, projectID uuid.UUID, params models.UpdateProjectParams) (*models.Project, error) {
+func (s *ProjectService) UpdateProject(ctx context.Context, projectID, actorID uuid.UUID, params models.UpdateProjectParams) (*models.Project, error) {
 	s.server.Logger.Debug().
 		Str("project_id", projectID.String()).
 		Msg("updating project")
@@ -157,6 +168,12 @@ func (s *ProjectService) UpdateProject(ctx context.Context, projectID uuid.UUID,
 		)
 	}
 
+	// Snapshot old values for the event
+	oldProject, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
 	project, err := s.projectRepo.Update(ctx, projectID, params)
 	if err != nil {
 		s.server.Logger.Error().Err(err).
@@ -169,14 +186,40 @@ func (s *ProjectService) UpdateProject(ctx context.Context, projectID uuid.UUID,
 		Str("project_id", projectID.String()).
 		Msg("project updated successfully")
 
+	// Emit event with old/new diff
+	oldValues := map[string]interface{}{}
+	newValues := map[string]interface{}{}
+	if oldProject != nil {
+		if params.Name != nil && *params.Name != oldProject.Name {
+			oldValues["name"] = oldProject.Name
+			newValues["name"] = *params.Name
+		}
+		if params.Description != nil {
+			oldValues["description"] = oldProject.Description
+			newValues["description"] = *params.Description
+		}
+		if params.Status != nil && *params.Status != oldProject.Status {
+			oldValues["status"] = oldProject.Status
+			newValues["status"] = *params.Status
+		}
+	}
+	s.events.ProjectUpdated(ctx, projectID, actorID, events.ProjectUpdatedPayload{
+		ProjectID: projectID,
+		OldValue:  oldValues,
+		NewValue:  newValues,
+	})
+
 	return project, nil
 }
 
 // DeleteProject soft-deletes a project
-func (s *ProjectService) DeleteProject(ctx context.Context, projectID uuid.UUID) error {
+func (s *ProjectService) DeleteProject(ctx context.Context, projectID, actorID uuid.UUID) error {
 	s.server.Logger.Debug().
 		Str("project_id", projectID.String()).
 		Msg("deleting project")
+
+	// Snapshot for the event before deletion
+	project, _ := s.projectRepo.GetByID(ctx, projectID)
 
 	if err := s.projectRepo.Delete(ctx, projectID); err != nil {
 		s.server.Logger.Error().Err(err).
@@ -189,11 +232,20 @@ func (s *ProjectService) DeleteProject(ctx context.Context, projectID uuid.UUID)
 		Str("project_id", projectID.String()).
 		Msg("project deleted successfully")
 
+	// Emit event
+	if project != nil {
+		s.events.ProjectDeleted(ctx, projectID, actorID, events.ProjectDeletedPayload{
+			ProjectID:  projectID,
+			Name:       project.Name,
+			Identifier: project.Identifier,
+		})
+	}
+
 	return nil
 }
 
 // AddMember adds a user to a project
-func (s *ProjectService) AddMember(ctx context.Context, projectID, userID uuid.UUID, role string) (*models.ProjectMember, error) {
+func (s *ProjectService) AddMember(ctx context.Context, projectID, userID, actorID uuid.UUID, role string) (*models.ProjectMember, error) {
 	// Validate role
 	if !allowedProjectRoles[role] {
 		return nil, errs.NewBadRequestError(
@@ -250,11 +302,18 @@ func (s *ProjectService) AddMember(ctx context.Context, projectID, userID uuid.U
 		Str("role", role).
 		Msg("member added to project successfully")
 
+	// Emit event
+	s.events.MemberAdded(ctx, projectID, actorID, events.MemberAddedPayload{
+		ProjectID: projectID,
+		UserID:    userID,
+		Role:      role,
+	})
+
 	return member, nil
 }
 
 // RemoveMember removes a user from a project
-func (s *ProjectService) RemoveMember(ctx context.Context, projectID, userID uuid.UUID) error {
+func (s *ProjectService) RemoveMember(ctx context.Context, projectID, userID, actorID uuid.UUID) error {
 	s.server.Logger.Debug().
 		Str("project_id", projectID.String()).
 		Str("user_id", userID.String()).
@@ -295,11 +354,17 @@ func (s *ProjectService) RemoveMember(ctx context.Context, projectID, userID uui
 		Str("user_id", userID.String()).
 		Msg("member removed from project successfully")
 
+	// Emit event
+	s.events.MemberRemoved(ctx, projectID, actorID, events.MemberRemovedPayload{
+		ProjectID: projectID,
+		UserID:    userID,
+	})
+
 	return nil
 }
 
 // UpdateMemberRole updates a member's role in a project
-func (s *ProjectService) UpdateMemberRole(ctx context.Context, projectID, userID uuid.UUID, role string) (*models.ProjectMember, error) {
+func (s *ProjectService) UpdateMemberRole(ctx context.Context, projectID, userID, actorID uuid.UUID, role string) (*models.ProjectMember, error) {
 	// Validate role
 	if !allowedProjectRoles[role] {
 		return nil, errs.NewBadRequestError(
@@ -324,6 +389,8 @@ func (s *ProjectService) UpdateMemberRole(ctx context.Context, projectID, userID
 	if existingMember == nil {
 		return nil, errs.NewNotFoundError("Member not found in project", false, nil)
 	}
+
+	oldRole := existingMember.Role
 
 	if existingMember.Role == "admin" && role != "admin" {
 		adminCount, adminErr := s.memberRepo.GetAdminCount(ctx, projectID)
@@ -352,6 +419,14 @@ func (s *ProjectService) UpdateMemberRole(ctx context.Context, projectID, userID
 		Str("user_id", userID.String()).
 		Str("role", role).
 		Msg("member role updated successfully")
+
+	// Emit event
+	s.events.MemberRoleChanged(ctx, projectID, actorID, events.MemberRoleChangedPayload{
+		ProjectID: projectID,
+		UserID:    userID,
+		OldRole:   oldRole,
+		NewRole:   role,
+	})
 
 	return member, nil
 }

@@ -61,8 +61,12 @@ func (h *ProjectHandler) GetProject(c echo.Context, req *GetProjectRequest) (*mo
 // UpdateProject updates a project
 func (h *ProjectHandler) UpdateProject(c echo.Context, req *UpdateProjectRequest) (*models.Project, error) {
 	projectID, _ := uuid.Parse(req.ProjectID)
+	actorID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	return h.services.Project.UpdateProject(c.Request().Context(), projectID, models.UpdateProjectParams{
+	return h.services.Project.UpdateProject(c.Request().Context(), projectID, actorID, models.UpdateProjectParams{
 		Name:        req.Name,
 		Slug:        req.Slug,
 		Description: req.Description,
@@ -73,8 +77,12 @@ func (h *ProjectHandler) UpdateProject(c echo.Context, req *UpdateProjectRequest
 // DeleteProject soft-deletes a project
 func (h *ProjectHandler) DeleteProject(c echo.Context, req *DeleteProjectRequest) (*EmptyResponse, error) {
 	projectID, _ := uuid.Parse(req.ProjectID)
+	actorID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	if err := h.services.Project.DeleteProject(c.Request().Context(), projectID); err != nil {
+	if err := h.services.Project.DeleteProject(c.Request().Context(), projectID, actorID); err != nil {
 		return nil, err
 	}
 
@@ -92,24 +100,36 @@ func (h *ProjectHandler) ListMembers(c echo.Context, req *ListProjectMembersRequ
 func (h *ProjectHandler) AddMember(c echo.Context, req *AddProjectMemberRequest) (*models.ProjectMember, error) {
 	projectID, _ := uuid.Parse(req.ProjectID)
 	userID, _ := uuid.Parse(req.UserID)
+	actorID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	return h.services.Project.AddMember(c.Request().Context(), projectID, userID, req.Role)
+	return h.services.Project.AddMember(c.Request().Context(), projectID, userID, actorID, req.Role)
 }
 
 // UpdateMemberRole updates a member's role in a project
 func (h *ProjectHandler) UpdateMemberRole(c echo.Context, req *UpdateProjectMemberRoleRequest) (*models.ProjectMember, error) {
 	projectID, _ := uuid.Parse(req.ProjectID)
 	userID, _ := uuid.Parse(req.UserID)
+	actorID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	return h.services.Project.UpdateMemberRole(c.Request().Context(), projectID, userID, req.Role)
+	return h.services.Project.UpdateMemberRole(c.Request().Context(), projectID, userID, actorID, req.Role)
 }
 
 // RemoveMember removes a user from a project
 func (h *ProjectHandler) RemoveMember(c echo.Context, req *RemoveProjectMemberRequest) (*EmptyResponse, error) {
 	projectID, _ := uuid.Parse(req.ProjectID)
 	userID, _ := uuid.Parse(req.UserID)
+	actorID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
 
-	if err := h.services.Project.RemoveMember(c.Request().Context(), projectID, userID); err != nil {
+	if err := h.services.Project.RemoveMember(c.Request().Context(), projectID, userID, actorID); err != nil {
 		return nil, err
 	}
 

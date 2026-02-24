@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/RahulSingh9131/vector/internal/errs"
+	"github.com/RahulSingh9131/vector/internal/events"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -42,21 +43,21 @@ var allowedIssueTypes = map[string]bool{
 
 // IssueService handles business logic for issues
 type IssueService struct {
-	server       *server.Server
-	issueRepo    *repository.IssueRepository
-	projectRepo  *repository.ProjectRepository
-	memberRepo   *repository.ProjectMemberRepository
-	activityRepo *repository.ActivityRepository
+	server      *server.Server
+	issueRepo   *repository.IssueRepository
+	projectRepo *repository.ProjectRepository
+	memberRepo  *repository.ProjectMemberRepository
+	events      *events.EventPublisher
 }
 
 // NewIssueService creates a new issue service
-func NewIssueService(s *server.Server, repos *repository.Repositories) *IssueService {
+func NewIssueService(s *server.Server, repos *repository.Repositories, ep *events.EventPublisher) *IssueService {
 	return &IssueService{
-		server:       s,
-		issueRepo:    repos.Issue,
-		projectRepo:  repos.Project,
-		memberRepo:   repos.ProjectMember,
-		activityRepo: repos.Activity,
+		server:      s,
+		issueRepo:   repos.Issue,
+		projectRepo: repos.Project,
+		memberRepo:  repos.ProjectMember,
+		events:      ep,
 	}
 }
 
@@ -146,20 +147,14 @@ func (s *IssueService) CreateIssue(ctx context.Context, projectID, reporterID uu
 		Str("project_id", projectID.String()).
 		Msg("issue created successfully")
 
-	// Record activity
-	s.recordActivity(ctx, models.CreateActivityParams{
-		ProjectID:  projectID,
-		IssueID:    &issue.ID,
-		ActorID:    reporterID,
-		Action:     "issue.created",
-		EntityType: "issue",
-		EntityID:   issue.ID,
-		NewValue: map[string]interface{}{
-			"title":    issue.Title,
-			"status":   issue.Status,
-			"priority": issue.Priority,
-			"type":     issue.Type,
-		},
+	// Publish domain event
+	s.events.IssueCreated(ctx, projectID, reporterID, events.IssueCreatedPayload{
+		IssueID:  issue.ID,
+		IssueKey: issue.IssueKey,
+		Title:    issue.Title,
+		Status:   issue.Status,
+		Priority: issue.Priority,
+		Type:     issue.Type,
 	})
 
 	return issue, nil
@@ -310,17 +305,12 @@ func (s *IssueService) UpdateIssue(ctx context.Context, issueID, actorID uuid.UU
 		Str("issue_id", issueID.String()).
 		Msg("issue updated successfully")
 
-	// Record activity
+	// Publish domain event
 	if len(oldValue) > 0 {
-		s.recordActivity(ctx, models.CreateActivityParams{
-			ProjectID:  existingIssue.ProjectID,
-			IssueID:    &issueID,
-			ActorID:    actorID,
-			Action:     "issue.updated",
-			EntityType: "issue",
-			EntityID:   issueID,
-			OldValue:   oldValue,
-			NewValue:   newValue,
+		s.events.IssueUpdated(ctx, existingIssue.ProjectID, actorID, events.IssueUpdatedPayload{
+			IssueID:  issueID,
+			OldValue: oldValue,
+			NewValue: newValue,
 		})
 	}
 
@@ -372,22 +362,11 @@ func (s *IssueService) AssignIssue(ctx context.Context, issueID, actorID uuid.UU
 		Str("issue_id", issueID.String()).
 		Msg("issue assigned successfully")
 
-	// Record activity
-	action := "issue.assigned"
-	if assigneeID == nil {
-		action = "issue.unassigned"
-	}
-	oldAssignee := map[string]interface{}{"assignee_id": existingIssue.AssigneeID}
-	newAssignee := map[string]interface{}{"assignee_id": assigneeID}
-	s.recordActivity(ctx, models.CreateActivityParams{
-		ProjectID:  existingIssue.ProjectID,
-		IssueID:    &issueID,
-		ActorID:    actorID,
-		Action:     action,
-		EntityType: "issue",
-		EntityID:   issueID,
-		OldValue:   oldAssignee,
-		NewValue:   newAssignee,
+	// Publish domain event
+	s.events.IssueAssigned(ctx, existingIssue.ProjectID, actorID, events.IssueAssignedPayload{
+		IssueID:       issueID,
+		OldAssigneeID: existingIssue.AssigneeID,
+		NewAssigneeID: assigneeID,
 	})
 
 	return issue, nil
@@ -433,16 +412,11 @@ func (s *IssueService) UpdateStatus(ctx context.Context, issueID, actorID uuid.U
 		Str("status", status).
 		Msg("issue status updated successfully")
 
-	// Record activity
-	s.recordActivity(ctx, models.CreateActivityParams{
-		ProjectID:  existingIssue.ProjectID,
-		IssueID:    &issueID,
-		ActorID:    actorID,
-		Action:     "issue.status_changed",
-		EntityType: "issue",
-		EntityID:   issueID,
-		OldValue:   map[string]interface{}{"status": existingIssue.Status},
-		NewValue:   map[string]interface{}{"status": status},
+	// Publish domain event
+	s.events.IssueStatusChanged(ctx, existingIssue.ProjectID, actorID, events.IssueStatusChangedPayload{
+		IssueID:   issueID,
+		OldStatus: existingIssue.Status,
+		NewStatus: status,
 	})
 
 	return issue, nil
@@ -474,24 +448,12 @@ func (s *IssueService) DeleteIssue(ctx context.Context, issueID, actorID uuid.UU
 		Str("issue_id", issueID.String()).
 		Msg("issue deleted successfully")
 
-	// Record activity (issue_id is null since the issue is deleted)
-	s.recordActivity(ctx, models.CreateActivityParams{
-		ProjectID:  existingIssue.ProjectID,
-		ActorID:    actorID,
-		Action:     "issue.deleted",
-		EntityType: "issue",
-		EntityID:   issueID,
-		Metadata:   map[string]interface{}{"title": existingIssue.Title, "issue_key": existingIssue.IssueKey},
+	// Publish domain event (issue_id is null since the issue is deleted)
+	s.events.IssueDeleted(ctx, existingIssue.ProjectID, actorID, events.IssueDeletedPayload{
+		IssueID:  issueID,
+		IssueKey: existingIssue.IssueKey,
+		Title:    existingIssue.Title,
 	})
 
 	return nil
-}
-
-// recordActivity is a helper that logs errors but doesn't propagate them
-func (s *IssueService) recordActivity(ctx context.Context, params models.CreateActivityParams) {
-	if _, err := s.activityRepo.Create(ctx, params); err != nil {
-		s.server.Logger.Error().Err(err).
-			Str("action", params.Action).
-			Msg("failed to record activity")
-	}
 }

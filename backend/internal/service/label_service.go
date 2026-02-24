@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/RahulSingh9131/vector/internal/errs"
+	"github.com/RahulSingh9131/vector/internal/events"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -16,19 +17,19 @@ var hexColorRegex = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 
 // LabelService handles business logic for labels
 type LabelService struct {
-	server       *server.Server
-	labelRepo    *repository.LabelRepository
-	issueRepo    *repository.IssueRepository
-	activityRepo *repository.ActivityRepository
+	server    *server.Server
+	labelRepo *repository.LabelRepository
+	issueRepo *repository.IssueRepository
+	events    *events.EventPublisher
 }
 
 // NewLabelService creates a new label service
-func NewLabelService(s *server.Server, repos *repository.Repositories) *LabelService {
+func NewLabelService(s *server.Server, repos *repository.Repositories, ep *events.EventPublisher) *LabelService {
 	return &LabelService{
-		server:       s,
-		labelRepo:    repos.Label,
-		issueRepo:    repos.Issue,
-		activityRepo: repos.Activity,
+		server:    s,
+		labelRepo: repos.Label,
+		issueRepo: repos.Issue,
+		events:    ep,
 	}
 }
 
@@ -191,15 +192,12 @@ func (s *LabelService) AddLabelToIssue(ctx context.Context, issueID, labelID, ac
 		Str("label_id", labelID.String()).
 		Msg("label added to issue successfully")
 
-	// Record activity
-	s.recordActivity(ctx, models.CreateActivityParams{
-		ProjectID:  issue.ProjectID,
-		IssueID:    &issueID,
-		ActorID:    actorID,
-		Action:     "label.added",
-		EntityType: "label",
-		EntityID:   labelID,
-		Metadata:   map[string]interface{}{"label_name": label.Name, "label_color": label.Color},
+	// Publish domain event
+	s.events.LabelAdded(ctx, issue.ProjectID, actorID, events.LabelAddedPayload{
+		IssueID:   issueID,
+		LabelID:   labelID,
+		LabelName: label.Name,
+		Color:     label.Color,
 	})
 
 	return nil
@@ -229,21 +227,19 @@ func (s *LabelService) RemoveLabelFromIssue(ctx context.Context, issueID, labelI
 		Str("label_id", labelID.String()).
 		Msg("label removed from issue successfully")
 
-	// Record activity
+	// Publish domain event
 	if issue != nil {
-		metadata := map[string]interface{}{}
+		labelName := ""
+		labelColor := ""
 		if label != nil {
-			metadata["label_name"] = label.Name
-			metadata["label_color"] = label.Color
+			labelName = label.Name
+			labelColor = label.Color
 		}
-		s.recordActivity(ctx, models.CreateActivityParams{
-			ProjectID:  issue.ProjectID,
-			IssueID:    &issueID,
-			ActorID:    actorID,
-			Action:     "label.removed",
-			EntityType: "label",
-			EntityID:   labelID,
-			Metadata:   metadata,
+		s.events.LabelRemoved(ctx, issue.ProjectID, actorID, events.LabelRemovedPayload{
+			IssueID:   issueID,
+			LabelID:   labelID,
+			LabelName: labelName,
+			Color:     labelColor,
 		})
 	}
 
@@ -261,13 +257,4 @@ func (s *LabelService) GetLabelsByIssue(ctx context.Context, issueID uuid.UUID) 
 	}
 
 	return labels, nil
-}
-
-// recordActivity is a helper that logs errors but doesn't propagate them
-func (s *LabelService) recordActivity(ctx context.Context, params models.CreateActivityParams) {
-	if _, err := s.activityRepo.Create(ctx, params); err != nil {
-		s.server.Logger.Error().Err(err).
-			Str("action", params.Action).
-			Msg("failed to record activity")
-	}
 }

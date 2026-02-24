@@ -45,4 +45,26 @@ export const activityContract = c.router({
         },
         summary: "List project activity feed",
     },
+    listMyActivity: {
+        method: "GET",
+        path: "/me/activity",
+        query: z.object({
+            page: z.coerce.number().min(1).optional().default(1),
+            limit: z.coerce.number().min(1).max(100).optional().default(20),
+            action: z.string().optional(),
+            entity_type: z.string().optional(),
+            from: z.string().datetime().optional(),
+            to: z.string().datetime().optional(),
+        }),
+        responses: {
+            200: z.object({
+                data: z.array(ActivityWithActorSchema),
+                total: z.number(),
+                page: z.number(),
+                limit: z.number(),
+                total_pages: z.number(),
+            }),
+        },
+        summary: "List authenticated user's activity across all projects",
+    },
 });

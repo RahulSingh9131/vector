@@ -527,3 +527,17 @@ type ListProjectActivityRequest struct {
 func (r *ListProjectActivityRequest) Validate() error {
 	return validate.Struct(r)
 }
+
+// ListMyActivityRequest represents query params for listing the authenticated user's activity
+type ListMyActivityRequest struct {
+	Page       int     `query:"page" validate:"omitempty,min=1"`
+	Limit      int     `query:"limit" validate:"omitempty,min=1,max=100"`
+	Action     *string `query:"action" validate:"omitempty"`
+	EntityType *string `query:"entity_type" validate:"omitempty"`
+	From       *string `query:"from" validate:"omitempty"`
+	To         *string `query:"to" validate:"omitempty"`
+}
+
+func (r *ListMyActivityRequest) Validate() error {
+	return validate.Struct(r)
+}

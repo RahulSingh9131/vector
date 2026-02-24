@@ -40,8 +40,8 @@ func (s *ActivityService) Record(ctx context.Context, params models.CreateActivi
 	}
 }
 
-// ListByIssue retrieves paginated activities for an issue
-func (s *ActivityService) ListByIssue(ctx context.Context, issueID uuid.UUID, page, limit int) (*models.PaginatedResponse[models.ActivityWithActor], error) {
+// ListByIssue retrieves paginated activities for an issue with optional filters
+func (s *ActivityService) ListByIssue(ctx context.Context, issueID uuid.UUID, page, limit int, filters models.ActivityFilters) (*models.PaginatedResponse[models.ActivityWithActor], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -49,7 +49,7 @@ func (s *ActivityService) ListByIssue(ctx context.Context, issueID uuid.UUID, pa
 		limit = 20
 	}
 
-	activities, total, err := s.activityRepo.ListByIssue(ctx, issueID, page, limit)
+	activities, total, err := s.activityRepo.ListByIssue(ctx, issueID, page, limit, filters)
 	if err != nil {
 		return nil, sqlerr.HandleError(err)
 	}
@@ -65,8 +65,8 @@ func (s *ActivityService) ListByIssue(ctx context.Context, issueID uuid.UUID, pa
 	}, nil
 }
 
-// ListByProject retrieves paginated activities for a project
-func (s *ActivityService) ListByProject(ctx context.Context, projectID uuid.UUID, page, limit int) (*models.PaginatedResponse[models.ActivityWithActor], error) {
+// ListByProject retrieves paginated activities for a project with optional filters
+func (s *ActivityService) ListByProject(ctx context.Context, projectID uuid.UUID, page, limit int, filters models.ActivityFilters) (*models.PaginatedResponse[models.ActivityWithActor], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -74,7 +74,7 @@ func (s *ActivityService) ListByProject(ctx context.Context, projectID uuid.UUID
 		limit = 20
 	}
 
-	activities, total, err := s.activityRepo.ListByProject(ctx, projectID, page, limit)
+	activities, total, err := s.activityRepo.ListByProject(ctx, projectID, page, limit, filters)
 	if err != nil {
 		return nil, sqlerr.HandleError(err)
 	}

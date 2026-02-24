@@ -44,3 +44,12 @@ type CreateActivityParams struct {
 	NewValue   interface{}
 	Metadata   interface{}
 }
+
+// ActivityFilters holds optional filter criteria for listing activities
+type ActivityFilters struct {
+	Action     *string    // e.g. "issue.created"
+	EntityType *string    // e.g. "issue", "comment", "label"
+	ActorID    *uuid.UUID // filter by who performed the action
+	From       *time.Time // activities created on or after this time
+	To         *time.Time // activities created on or before this time
+}

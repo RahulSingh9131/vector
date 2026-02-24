@@ -495,11 +495,16 @@ func (r *DeleteCommentRequest) Validate() error {
 
 // ListIssueActivityRequest represents query params for listing issue activity
 type ListIssueActivityRequest struct {
-	OrgID     string `param:"orgId" validate:"required,uuid"`
-	ProjectID string `param:"projectId" validate:"required,uuid"`
-	IssueID   string `param:"issueId" validate:"required,uuid"`
-	Page      int    `query:"page" validate:"omitempty,min=1"`
-	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	OrgID      string  `param:"orgId" validate:"required,uuid"`
+	ProjectID  string  `param:"projectId" validate:"required,uuid"`
+	IssueID    string  `param:"issueId" validate:"required,uuid"`
+	Page       int     `query:"page" validate:"omitempty,min=1"`
+	Limit      int     `query:"limit" validate:"omitempty,min=1,max=100"`
+	Action     *string `query:"action" validate:"omitempty"`
+	EntityType *string `query:"entity_type" validate:"omitempty"`
+	ActorID    *string `query:"actor_id" validate:"omitempty,uuid"`
+	From       *string `query:"from" validate:"omitempty"`
+	To         *string `query:"to" validate:"omitempty"`
 }
 
 func (r *ListIssueActivityRequest) Validate() error {
@@ -508,10 +513,15 @@ func (r *ListIssueActivityRequest) Validate() error {
 
 // ListProjectActivityRequest represents query params for listing project activity
 type ListProjectActivityRequest struct {
-	OrgID     string `param:"orgId" validate:"required,uuid"`
-	ProjectID string `param:"projectId" validate:"required,uuid"`
-	Page      int    `query:"page" validate:"omitempty,min=1"`
-	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	OrgID      string  `param:"orgId" validate:"required,uuid"`
+	ProjectID  string  `param:"projectId" validate:"required,uuid"`
+	Page       int     `query:"page" validate:"omitempty,min=1"`
+	Limit      int     `query:"limit" validate:"omitempty,min=1,max=100"`
+	Action     *string `query:"action" validate:"omitempty"`
+	EntityType *string `query:"entity_type" validate:"omitempty"`
+	ActorID    *string `query:"actor_id" validate:"omitempty,uuid"`
+	From       *string `query:"from" validate:"omitempty"`
+	To         *string `query:"to" validate:"omitempty"`
 }
 
 func (r *ListProjectActivityRequest) Validate() error {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -14,12 +15,14 @@ import (
 
 // IssueRepository handles database operations for issues
 type IssueRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewIssueRepository creates a new issue repository
 func NewIssueRepository(s *server.Server) *IssueRepository {
 	return &IssueRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -36,7 +39,7 @@ func (r *IssueRepository) Create(ctx context.Context, params models.CreateIssueP
 	`
 
 	var issue models.Issue
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		params.ProjectID,
@@ -100,7 +103,7 @@ func (r *IssueRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Is
 	var aIsActive *bool
 	var aLastLogin, aCreatedAt, aUpdatedAt *interface{}
 
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&issue.ID, &issue.ProjectID, &issue.IssueKey, &issue.Title, &issue.Description,
 		&issue.Status, &issue.Priority, &issue.Type, &issue.AssigneeID, &issue.ReporterID,
 		&issue.SortOrder, &issue.ParentIssueID, &issue.DueDate, &issue.CreatedAt, &issue.UpdatedAt,
@@ -146,7 +149,7 @@ func (r *IssueRepository) GetByIssueKey(ctx context.Context, projectID uuid.UUID
 	`
 
 	var issue models.Issue
-	err := r.server.DB.Pool.QueryRow(ctx, query, projectID, issueKey).Scan(
+	err := r.db.QueryRow(ctx, query, projectID, issueKey).Scan(
 		&issue.ID, &issue.ProjectID, &issue.IssueKey, &issue.Title, &issue.Description,
 		&issue.Status, &issue.Priority, &issue.Type, &issue.AssigneeID, &issue.ReporterID,
 		&issue.SortOrder, &issue.ParentIssueID, &issue.DueDate, &issue.CreatedAt, &issue.UpdatedAt,
@@ -195,7 +198,7 @@ func (r *IssueRepository) ListByProject(ctx context.Context, projectID uuid.UUID
 	// Count total
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM issues i WHERE %s", whereClause)
 	var total int
-	if err := r.server.DB.Pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, err
 	}
 
@@ -228,7 +231,7 @@ func (r *IssueRepository) ListByProject(ctx context.Context, projectID uuid.UUID
 
 	args = append(args, limit, offset)
 
-	rows, err := r.server.DB.Pool.Query(ctx, dataQuery, args...)
+	rows, err := r.db.Query(ctx, dataQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +284,7 @@ func (r *IssueRepository) Update(ctx context.Context, id uuid.UUID, params model
 	`
 
 	var issue models.Issue
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		id,
@@ -310,7 +313,7 @@ func (r *IssueRepository) Update(ctx context.Context, id uuid.UUID, params model
 // Delete hard deletes an issue
 func (r *IssueRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM issues WHERE id = $1`
-	_, err := r.server.DB.Pool.Exec(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
 
@@ -325,7 +328,7 @@ func (r *IssueRepository) GetSubIssues(ctx context.Context, parentID uuid.UUID) 
 		ORDER BY sort_order ASC, created_at DESC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, parentID)
+	rows, err := r.db.Query(ctx, query, parentID)
 	if err != nil {
 		return nil, err
 	}

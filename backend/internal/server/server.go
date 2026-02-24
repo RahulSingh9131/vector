@@ -51,14 +51,9 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *logger.Logge
 
 	logger.Info().Msg("connected to the redis")
 
-	// Start job service
+	// Initialize job service (started from main.go after event handlers are registered)
 	jobService := job.NewJobService(logger, cfg)
 	jobService.InitHandlers(cfg, logger)
-
-	// Start job server
-	if err := jobService.Start(); err != nil {
-		return nil, fmt.Errorf("failed to start job server: %w", err)
-	}
 
 	return &Server{
 		Config:        cfg,

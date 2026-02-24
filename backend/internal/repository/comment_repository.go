@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -12,12 +13,14 @@ import (
 
 // CommentRepository handles database operations for comments
 type CommentRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewCommentRepository creates a new comment repository
 func NewCommentRepository(s *server.Server) *CommentRepository {
 	return &CommentRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -32,7 +35,7 @@ func (r *CommentRepository) Create(ctx context.Context, params models.CreateComm
 	`
 
 	var comment models.Comment
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx, query,
 		params.IssueID, params.AuthorID, params.Body, params.ParentCommentID,
 	).Scan(
@@ -61,7 +64,7 @@ func (r *CommentRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 	`
 
 	var cwa models.CommentWithAuthor
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&cwa.ID, &cwa.IssueID, &cwa.AuthorID, &cwa.Body,
 		&cwa.ParentCommentID, &cwa.IsEdited, &cwa.EditedAt,
 		&cwa.IsDeleted, &cwa.DeletedAt, &cwa.CreatedAt, &cwa.UpdatedAt,
@@ -96,7 +99,7 @@ func (r *CommentRepository) ListByIssue(ctx context.Context, issueID uuid.UUID, 
 		WHERE issue_id = $1 AND parent_comment_id IS NULL
 	`
 	var total int
-	if err := r.server.DB.Pool.QueryRow(ctx, countQuery, issueID).Scan(&total); err != nil {
+	if err := r.db.QueryRow(ctx, countQuery, issueID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -113,7 +116,7 @@ func (r *CommentRepository) ListByIssue(ctx context.Context, issueID uuid.UUID, 
 		LIMIT $2 OFFSET $3
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, topLevelQuery, issueID, limit, offset)
+	rows, err := r.db.Query(ctx, topLevelQuery, issueID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -153,7 +156,7 @@ func (r *CommentRepository) ListByIssue(ctx context.Context, issueID uuid.UUID, 
 		ORDER BY c.created_at ASC
 	`
 
-	replyRows, err := r.server.DB.Pool.Query(ctx, repliesQuery, topLevelIDs)
+	replyRows, err := r.db.Query(ctx, repliesQuery, topLevelIDs)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -204,7 +207,7 @@ func (r *CommentRepository) Update(ctx context.Context, id uuid.UUID, params mod
 	`
 
 	var comment models.Comment
-	err := r.server.DB.Pool.QueryRow(ctx, query, id, params.Body).Scan(
+	err := r.db.QueryRow(ctx, query, id, params.Body).Scan(
 		&comment.ID, &comment.IssueID, &comment.AuthorID, &comment.Body,
 		&comment.ParentCommentID, &comment.IsEdited, &comment.EditedAt,
 		&comment.IsDeleted, &comment.DeletedAt, &comment.CreatedAt, &comment.UpdatedAt,
@@ -227,7 +230,7 @@ func (r *CommentRepository) SoftDelete(ctx context.Context, id uuid.UUID) error 
 		SET is_deleted = true, deleted_at = NOW(), body = '[deleted]'
 		WHERE id = $1 AND is_deleted = false
 	`
-	result, err := r.server.DB.Pool.Exec(ctx, query, id)
+	result, err := r.db.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -241,7 +244,7 @@ func (r *CommentRepository) SoftDelete(ctx context.Context, id uuid.UUID) error 
 func (r *CommentRepository) CountByIssue(ctx context.Context, issueID uuid.UUID) (int, error) {
 	query := `SELECT COUNT(*) FROM comments WHERE issue_id = $1 AND is_deleted = false`
 	var count int
-	err := r.server.DB.Pool.QueryRow(ctx, query, issueID).Scan(&count)
+	err := r.db.QueryRow(ctx, query, issueID).Scan(&count)
 	return count, err
 }
 
@@ -249,7 +252,7 @@ func (r *CommentRepository) CountByIssue(ctx context.Context, issueID uuid.UUID)
 func (r *CommentRepository) GetAuthorID(ctx context.Context, id uuid.UUID) (*uuid.UUID, error) {
 	query := `SELECT author_id FROM comments WHERE id = $1`
 	var authorID uuid.UUID
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(&authorID)
+	err := r.db.QueryRow(ctx, query, id).Scan(&authorID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

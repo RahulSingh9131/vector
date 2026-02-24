@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -13,12 +14,14 @@ import (
 
 // OrganizationMemberRepository handles database operations for organization members
 type OrganizationMemberRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewOrganizationMemberRepository creates a new organization member repository
 func NewOrganizationMemberRepository(s *server.Server) *OrganizationMemberRepository {
 	return &OrganizationMemberRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -34,7 +37,7 @@ func (r *OrganizationMemberRepository) AddMember(ctx context.Context, params mod
 	`
 
 	var member models.OrganizationMember
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		params.OrganizationID,
@@ -62,7 +65,7 @@ func (r *OrganizationMemberRepository) RemoveMember(ctx context.Context, organiz
 		WHERE organization_id = $1 AND user_id = $2
 	`
 
-	result, err := r.server.DB.Pool.Exec(ctx, query, organizationID, userID)
+	result, err := r.db.Exec(ctx, query, organizationID, userID)
 	if err != nil {
 		return err
 	}
@@ -84,7 +87,7 @@ func (r *OrganizationMemberRepository) UpdateRole(ctx context.Context, organizat
 	`
 
 	var member models.OrganizationMember
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		organizationID,
@@ -117,7 +120,7 @@ func (r *OrganizationMemberRepository) GetMember(ctx context.Context, organizati
 	`
 
 	var member models.OrganizationMember
-	err := r.server.DB.Pool.QueryRow(ctx, query, organizationID, userID).Scan(
+	err := r.db.QueryRow(ctx, query, organizationID, userID).Scan(
 		&member.ID,
 		&member.OrganizationID,
 		&member.UserID,
@@ -148,7 +151,7 @@ func (r *OrganizationMemberRepository) GetMembersByOrganization(ctx context.Cont
 		ORDER BY om.joined_at ASC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, organizationID)
+	rows, err := r.db.Query(ctx, query, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +206,7 @@ func (r *OrganizationMemberRepository) GetOrganizationsByUser(ctx context.Contex
 		ORDER BY om.joined_at ASC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, userID)
+	rows, err := r.db.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +262,7 @@ func (r *OrganizationMemberRepository) GetMembersByRole(ctx context.Context, org
 		ORDER BY om.joined_at ASC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, organizationID, role)
+	rows, err := r.db.Query(ctx, query, organizationID, role)
 	if err != nil {
 		return nil, err
 	}

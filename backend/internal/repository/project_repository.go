@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -12,12 +13,14 @@ import (
 
 // ProjectRepository handles database operations for projects
 type ProjectRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewProjectRepository creates a new project repository
 func NewProjectRepository(s *server.Server) *ProjectRepository {
 	return &ProjectRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -32,7 +35,7 @@ func (r *ProjectRepository) Create(ctx context.Context, params models.CreateProj
 	`
 
 	var project models.Project
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		params.OrganizationID,
@@ -72,7 +75,7 @@ func (r *ProjectRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 	`
 
 	var project models.Project
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&project.ID,
 		&project.OrganizationID,
 		&project.Name,
@@ -106,7 +109,7 @@ func (r *ProjectRepository) GetBySlug(ctx context.Context, orgID uuid.UUID, slug
 	`
 
 	var project models.Project
-	err := r.server.DB.Pool.QueryRow(ctx, query, orgID, slug).Scan(
+	err := r.db.QueryRow(ctx, query, orgID, slug).Scan(
 		&project.ID,
 		&project.OrganizationID,
 		&project.Name,
@@ -140,7 +143,7 @@ func (r *ProjectRepository) ListByOrganization(ctx context.Context, orgID uuid.U
 		ORDER BY created_at DESC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, orgID)
+	rows, err := r.db.Query(ctx, query, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +184,7 @@ func (r *ProjectRepository) ListByUserAndOrganization(ctx context.Context, userI
 		ORDER BY p.created_at DESC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, orgID, userID)
+	rows, err := r.db.Query(ctx, query, orgID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +228,7 @@ func (r *ProjectRepository) Update(ctx context.Context, id uuid.UUID, params mod
 	`
 
 	var project models.Project
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		id,
@@ -262,7 +265,7 @@ func (r *ProjectRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		WHERE id = $1
 	`
 
-	_, err := r.server.DB.Pool.Exec(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
 
@@ -276,7 +279,7 @@ func (r *ProjectRepository) IncrementIssueCounter(ctx context.Context, id uuid.U
 	`
 
 	var counter int
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(&counter)
+	err := r.db.QueryRow(ctx, query, id).Scan(&counter)
 	if err != nil {
 		return 0, err
 	}
@@ -293,7 +296,7 @@ func (r *ProjectRepository) GetProjectCount(ctx context.Context, orgID uuid.UUID
 	`
 
 	var count int
-	err := r.server.DB.Pool.QueryRow(ctx, query, orgID).Scan(&count)
+	err := r.db.QueryRow(ctx, query, orgID).Scan(&count)
 	if err != nil {
 		return 0, err
 	}

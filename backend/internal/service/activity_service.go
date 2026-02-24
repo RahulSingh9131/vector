@@ -89,3 +89,28 @@ func (s *ActivityService) ListByProject(ctx context.Context, projectID uuid.UUID
 		TotalPages: totalPages,
 	}, nil
 }
+
+// ListByActor retrieves paginated activities performed by a specific user with optional filters
+func (s *ActivityService) ListByActor(ctx context.Context, actorID uuid.UUID, page, limit int, filters models.ActivityFilters) (*models.PaginatedResponse[models.ActivityWithActor], error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	activities, total, err := s.activityRepo.ListByActor(ctx, actorID, page, limit, filters)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	return &models.PaginatedResponse[models.ActivityWithActor]{
+		Data:       activities,
+		Total:      total,
+		Page:       page,
+		Limit:      limit,
+		TotalPages: totalPages,
+	}, nil
+}

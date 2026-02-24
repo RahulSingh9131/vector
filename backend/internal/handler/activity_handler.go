@@ -92,3 +92,22 @@ func (h *ActivityHandler) RegisterProjectRoutes(g *echo.Group) {
 	g.GET("", Handle(h.Handler, h.ListProjectActivity, http.StatusOK, &ListProjectActivityRequest{}))
 }
 
+// ListMyActivity returns the activity feed for the authenticated user across all projects
+func (h *ActivityHandler) ListMyActivity(c echo.Context, req *ListMyActivityRequest) (*models.PaginatedResponse[models.ActivityWithActor], error) {
+	user, ok := c.Get("user").(*models.User)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
+
+	filters, err := parseActivityFilters(req.Action, req.EntityType, nil, req.From, req.To)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.services.Activity.ListByActor(c.Request().Context(), user.ID, req.Page, req.Limit, filters)
+}
+
+// RegisterUserRoutes registers user activity routes (mounted under /me)
+func (h *ActivityHandler) RegisterUserRoutes(g *echo.Group) {
+	g.GET("", Handle(h.Handler, h.ListMyActivity, http.StatusOK, &ListMyActivityRequest{}))
+}

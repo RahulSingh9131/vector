@@ -20,6 +20,9 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		// User routes
 		h.User.RegisterRoutes(api)
 
+		// User activity feed (my activity)
+		myActivity := api.Group("/me/activity")
+		h.Activity.RegisterUserRoutes(myActivity)
 		// Organization routes
 		orgs := api.Group("/organizations")
 		h.Organization.RegisterRoutes(orgs)

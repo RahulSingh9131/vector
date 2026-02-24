@@ -10,6 +10,7 @@ import (
 
 	"github.com/RahulSingh9131/vector/internal/config"
 	"github.com/RahulSingh9131/vector/internal/database"
+	"github.com/RahulSingh9131/vector/internal/events"
 	"github.com/RahulSingh9131/vector/internal/handler"
 	"github.com/RahulSingh9131/vector/internal/logger"
 	"github.com/RahulSingh9131/vector/internal/repository"
@@ -55,6 +56,16 @@ func main() {
 		return
 	}
 	handlers := handler.NewHandlers(srv, services)
+
+	// Register activity subscriber for domain events
+	activitySubscriber := events.NewActivitySubscriber(repos.Activity, &log)
+	srv.Job.RegisterEventHandler(activitySubscriber.HandleEvent)
+
+	// Start job server (after event handlers are registered)
+	if err := srv.Job.Start(); err != nil {
+		log.Error().Err(err).Msg("failed to start job server")
+		return
+	}
 
 	// Initialize router
 	r := router.NewRouter(srv, handlers, services)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -12,12 +13,14 @@ import (
 
 // LabelRepository handles database operations for labels
 type LabelRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewLabelRepository creates a new label repository
 func NewLabelRepository(s *server.Server) *LabelRepository {
 	return &LabelRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -31,7 +34,7 @@ func (r *LabelRepository) Create(ctx context.Context, params models.CreateLabelP
 	`
 
 	var label models.Label
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx, query,
 		params.ProjectID, params.Name, params.Color, params.Description,
 	).Scan(
@@ -55,7 +58,7 @@ func (r *LabelRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.La
 	`
 
 	var label models.Label
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&label.ID, &label.ProjectID, &label.Name, &label.Color,
 		&label.Description, &label.CreatedAt, &label.UpdatedAt,
 	)
@@ -79,7 +82,7 @@ func (r *LabelRepository) ListByProject(ctx context.Context, projectID uuid.UUID
 		ORDER BY name ASC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, projectID)
+	rows, err := r.db.Query(ctx, query, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +115,7 @@ func (r *LabelRepository) Update(ctx context.Context, id uuid.UUID, params model
 	`
 
 	var label models.Label
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx, query,
 		id, params.Name, params.Color, params.Description,
 	).Scan(
@@ -130,7 +133,7 @@ func (r *LabelRepository) Update(ctx context.Context, id uuid.UUID, params model
 // Delete deletes a label (cascade removes issue_labels associations)
 func (r *LabelRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM labels WHERE id = $1`
-	_, err := r.server.DB.Pool.Exec(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
 
@@ -141,14 +144,14 @@ func (r *LabelRepository) AddLabelToIssue(ctx context.Context, issueID, labelID 
 		VALUES ($1, $2)
 		ON CONFLICT (issue_id, label_id) DO NOTHING
 	`
-	_, err := r.server.DB.Pool.Exec(ctx, query, issueID, labelID)
+	_, err := r.db.Exec(ctx, query, issueID, labelID)
 	return err
 }
 
 // RemoveLabelFromIssue removes a label from an issue
 func (r *LabelRepository) RemoveLabelFromIssue(ctx context.Context, issueID, labelID uuid.UUID) error {
 	query := `DELETE FROM issue_labels WHERE issue_id = $1 AND label_id = $2`
-	_, err := r.server.DB.Pool.Exec(ctx, query, issueID, labelID)
+	_, err := r.db.Exec(ctx, query, issueID, labelID)
 	return err
 }
 
@@ -162,7 +165,7 @@ func (r *LabelRepository) GetLabelsByIssue(ctx context.Context, issueID uuid.UUI
 		ORDER BY l.name ASC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, issueID)
+	rows, err := r.db.Query(ctx, query, issueID)
 	if err != nil {
 		return nil, err
 	}

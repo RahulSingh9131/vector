@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -12,12 +13,14 @@ import (
 
 // OrganizationRepository handles database operations for organizations
 type OrganizationRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewOrganizationRepository creates a new organization repository
 func NewOrganizationRepository(s *server.Server) *OrganizationRepository {
 	return &OrganizationRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -32,7 +35,7 @@ func (r *OrganizationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 	`
 
 	var org models.Organization
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&org.ID,
 		&org.ClerkOrgID,
 		&org.Name,
@@ -66,7 +69,7 @@ func (r *OrganizationRepository) GetByClerkID(ctx context.Context, clerkOrgID st
 	`
 
 	var org models.Organization
-	err := r.server.DB.Pool.QueryRow(ctx, query, clerkOrgID).Scan(
+	err := r.db.QueryRow(ctx, query, clerkOrgID).Scan(
 		&org.ID,
 		&org.ClerkOrgID,
 		&org.Name,
@@ -100,7 +103,7 @@ func (r *OrganizationRepository) GetBySlug(ctx context.Context, slug string) (*m
 	`
 
 	var org models.Organization
-	err := r.server.DB.Pool.QueryRow(ctx, query, slug).Scan(
+	err := r.db.QueryRow(ctx, query, slug).Scan(
 		&org.ID,
 		&org.ClerkOrgID,
 		&org.Name,
@@ -134,7 +137,7 @@ func (r *OrganizationRepository) Create(ctx context.Context, params models.Creat
 	`
 
 	var org models.Organization
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		params.ClerkOrgID,
@@ -182,7 +185,7 @@ func (r *OrganizationRepository) Update(ctx context.Context, id uuid.UUID, param
 	`
 
 	var org models.Organization
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		id,
@@ -222,7 +225,7 @@ func (r *OrganizationRepository) Delete(ctx context.Context, id uuid.UUID) error
 		WHERE id = $1
 	`
 
-	_, err := r.server.DB.Pool.Exec(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
 
@@ -234,7 +237,7 @@ func (r *OrganizationRepository) GetOrCreate(ctx context.Context, params models.
 		ON CONFLICT (clerk_org_id) DO NOTHING
 	`
 
-	_, err := r.server.DB.Pool.Exec(
+	_, err := r.db.Exec(
 		ctx,
 		query,
 		params.ClerkOrgID,
@@ -262,7 +265,7 @@ func (r *OrganizationRepository) GetMemberCount(ctx context.Context, orgID uuid.
 	`
 
 	var count int
-	err := r.server.DB.Pool.QueryRow(ctx, query, orgID).Scan(&count)
+	err := r.db.QueryRow(ctx, query, orgID).Scan(&count)
 	if err != nil {
 		return 0, err
 	}

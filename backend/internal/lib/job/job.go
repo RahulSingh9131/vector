@@ -1,3 +1,4 @@
+// Package job provides background job processing using async task queues for emails and domain events.
 package job
 
 import (
@@ -7,9 +8,10 @@ import (
 )
 
 type JobService struct {
-	Client *asynq.Client
-	server *asynq.Server
-	logger *zerolog.Logger
+	Client           *asynq.Client
+	server           *asynq.Server
+	logger           *zerolog.Logger
+	eventHandlerFunc asynq.HandlerFunc
 }
 
 func NewJobService(logger *zerolog.Logger, cfg *config.Config) *JobService {
@@ -37,11 +39,37 @@ func NewJobService(logger *zerolog.Logger, cfg *config.Config) *JobService {
 	}
 }
 
+// RegisterEventHandler sets the unified event handler function that will
+// be registered for all domain event task types.
+func (js *JobService) RegisterEventHandler(handler asynq.HandlerFunc) {
+	js.eventHandlerFunc = handler
+}
+
 func (js *JobService) Start() error {
-	// regiter task handlers
+	// register task handlers
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(TaskWelcome, js.handleWelcomeEmailTask)
+
+	// Register domain event handlers
+	if js.eventHandlerFunc != nil {
+		eventTypes := []string{
+			"event:issue.created",
+			"event:issue.updated",
+			"event:issue.assigned",
+			"event:issue.unassigned",
+			"event:issue.status_changed",
+			"event:issue.deleted",
+			"event:comment.created",
+			"event:comment.updated",
+			"event:comment.deleted",
+			"event:label.added",
+			"event:label.removed",
+		}
+		for _, t := range eventTypes {
+			mux.HandleFunc(t, js.eventHandlerFunc)
+		}
+	}
 
 	js.logger.Info().Msg("Starting background job Server")
 	if err := js.server.Start(mux); err != nil {

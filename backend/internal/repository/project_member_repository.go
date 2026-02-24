@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -12,12 +13,14 @@ import (
 
 // ProjectMemberRepository handles database operations for project members
 type ProjectMemberRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewProjectMemberRepository creates a new project member repository
 func NewProjectMemberRepository(s *server.Server) *ProjectMemberRepository {
 	return &ProjectMemberRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -31,7 +34,7 @@ func (r *ProjectMemberRepository) AddMember(ctx context.Context, params models.C
 	`
 
 	var member models.ProjectMember
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		params.ProjectID,
@@ -59,7 +62,7 @@ func (r *ProjectMemberRepository) RemoveMember(ctx context.Context, projectID, u
 		WHERE project_id = $1 AND user_id = $2
 	`
 
-	_, err := r.server.DB.Pool.Exec(ctx, query, projectID, userID)
+	_, err := r.db.Exec(ctx, query, projectID, userID)
 	return err
 }
 
@@ -73,7 +76,7 @@ func (r *ProjectMemberRepository) UpdateRole(ctx context.Context, projectID, use
 	`
 
 	var member models.ProjectMember
-	err := r.server.DB.Pool.QueryRow(ctx, query, projectID, userID, role).Scan(
+	err := r.db.QueryRow(ctx, query, projectID, userID, role).Scan(
 		&member.ID,
 		&member.ProjectID,
 		&member.UserID,
@@ -97,7 +100,7 @@ func (r *ProjectMemberRepository) GetMember(ctx context.Context, projectID, user
 	`
 
 	var member models.ProjectMember
-	err := r.server.DB.Pool.QueryRow(ctx, query, projectID, userID).Scan(
+	err := r.db.QueryRow(ctx, query, projectID, userID).Scan(
 		&member.ID,
 		&member.ProjectID,
 		&member.UserID,
@@ -127,7 +130,7 @@ func (r *ProjectMemberRepository) GetMembersByProject(ctx context.Context, proje
 		ORDER BY pm.joined_at ASC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, projectID)
+	rows, err := r.db.Query(ctx, query, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +166,7 @@ func (r *ProjectMemberRepository) GetProjectsByUser(ctx context.Context, userID,
 		ORDER BY p.created_at DESC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, userID, orgID)
+	rows, err := r.db.Query(ctx, query, userID, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +200,7 @@ func (r *ProjectMemberRepository) GetMemberCount(ctx context.Context, projectID 
 	`
 
 	var count int
-	err := r.server.DB.Pool.QueryRow(ctx, query, projectID).Scan(&count)
+	err := r.db.QueryRow(ctx, query, projectID).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -214,7 +217,7 @@ func (r *ProjectMemberRepository) GetAdminCount(ctx context.Context, projectID u
 	`
 
 	var count int
-	err := r.server.DB.Pool.QueryRow(ctx, query, projectID).Scan(&count)
+	err := r.db.QueryRow(ctx, query, projectID).Scan(&count)
 	if err != nil {
 		return 0, err
 	}

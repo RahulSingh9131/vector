@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/RahulSingh9131/vector/internal/events"
 	"github.com/RahulSingh9131/vector/internal/lib/job"
 	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -19,13 +20,17 @@ type Services struct {
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
+	// Create event bus and publisher
+	eventBus := events.NewAsynqEventBus(s.Job.Client, s.Logger)
+	eventPublisher := events.NewEventPublisher(eventBus, s.Logger)
+
 	authService := NewAuthService(s)
 	userService := NewUserService(s, repos)
 	organizationService := NewOrganizationService(s, repos)
 	projectService := NewProjectService(s, repos)
-	issueService := NewIssueService(s, repos)
-	labelService := NewLabelService(s, repos)
-	commentService := NewCommentService(s, repos)
+	issueService := NewIssueService(s, repos, eventPublisher)
+	labelService := NewLabelService(s, repos, eventPublisher)
+	commentService := NewCommentService(s, repos, eventPublisher)
 	activityService := NewActivityService(s, repos)
 
 	return &Services{

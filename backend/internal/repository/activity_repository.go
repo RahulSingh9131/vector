@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -13,12 +14,14 @@ import (
 
 // ActivityRepository handles database operations for activities
 type ActivityRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewActivityRepository creates a new activity repository
 func NewActivityRepository(s *server.Server) *ActivityRepository {
 	return &ActivityRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -56,7 +59,7 @@ func (r *ActivityRepository) Create(ctx context.Context, params models.CreateAct
 	`
 
 	var activity models.Activity
-	err = r.server.DB.Pool.QueryRow(
+	err = r.db.QueryRow(
 		ctx, query,
 		params.ProjectID, params.IssueID, params.ActorID,
 		params.Action, params.EntityType, params.EntityID,
@@ -87,7 +90,7 @@ func (r *ActivityRepository) ListByIssue(ctx context.Context, issueID uuid.UUID,
 	// Count total
 	countQuery := `SELECT COUNT(*) FROM activities WHERE issue_id = $1`
 	var total int
-	if err := r.server.DB.Pool.QueryRow(ctx, countQuery, issueID).Scan(&total); err != nil {
+	if err := r.db.QueryRow(ctx, countQuery, issueID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -104,7 +107,7 @@ func (r *ActivityRepository) ListByIssue(ctx context.Context, issueID uuid.UUID,
 		LIMIT $2 OFFSET $3
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, issueID, limit, offset)
+	rows, err := r.db.Query(ctx, query, issueID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -145,7 +148,7 @@ func (r *ActivityRepository) ListByProject(ctx context.Context, projectID uuid.U
 	// Count total
 	countQuery := `SELECT COUNT(*) FROM activities WHERE project_id = $1`
 	var total int
-	if err := r.server.DB.Pool.QueryRow(ctx, countQuery, projectID).Scan(&total); err != nil {
+	if err := r.db.QueryRow(ctx, countQuery, projectID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -162,7 +165,7 @@ func (r *ActivityRepository) ListByProject(ctx context.Context, projectID uuid.U
 		LIMIT $2 OFFSET $3
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query, projectID, limit, offset)
+	rows, err := r.db.Query(ctx, query, projectID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}

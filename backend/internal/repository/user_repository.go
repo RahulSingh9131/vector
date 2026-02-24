@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/google/uuid"
@@ -13,12 +14,14 @@ import (
 
 // UserRepository handles database operations for users
 type UserRepository struct {
+	db     database.DBTX
 	server *server.Server
 }
 
 // NewUserRepository creates a new user repository
 func NewUserRepository(s *server.Server) *UserRepository {
 	return &UserRepository{
+		db:     s.DB.Pool,
 		server: s,
 	}
 }
@@ -33,7 +36,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Use
 	`
 
 	var user models.User
-	err := r.server.DB.Pool.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.ClerkUserID,
 		&user.Email,
@@ -66,7 +69,7 @@ func (r *UserRepository) GetByClerkID(ctx context.Context, clerkUserID string) (
 	`
 
 	var user models.User
-	err := r.server.DB.Pool.QueryRow(ctx, query, clerkUserID).Scan(
+	err := r.db.QueryRow(ctx, query, clerkUserID).Scan(
 		&user.ID,
 		&user.ClerkUserID,
 		&user.Email,
@@ -99,7 +102,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.
 	`
 
 	var user models.User
-	err := r.server.DB.Pool.QueryRow(ctx, query, email).Scan(
+	err := r.db.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.ClerkUserID,
 		&user.Email,
@@ -132,7 +135,7 @@ func (r *UserRepository) Create(ctx context.Context, params models.CreateUserPar
 	`
 
 	var user models.User
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		params.ClerkUserID,
@@ -175,7 +178,7 @@ func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, params models
 	`
 
 	var user models.User
-	err := r.server.DB.Pool.QueryRow(
+	err := r.db.QueryRow(
 		ctx,
 		query,
 		id,
@@ -212,7 +215,7 @@ func (r *UserRepository) UpdateLastLogin(ctx context.Context, id uuid.UUID) erro
 		WHERE id = $1
 	`
 
-	_, err := r.server.DB.Pool.Exec(ctx, query, id, time.Now())
+	_, err := r.db.Exec(ctx, query, id, time.Now())
 	return err
 }
 
@@ -224,7 +227,7 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		WHERE id = $1
 	`
 
-	_, err := r.server.DB.Pool.Exec(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
 
@@ -236,7 +239,7 @@ func (r *UserRepository) GetOrCreate(ctx context.Context, params models.CreateUs
 		ON CONFLICT (clerk_user_id) DO NOTHING
 	`
 
-	_, err := r.server.DB.Pool.Exec(
+	_, err := r.db.Exec(
 		ctx,
 		query,
 		params.ClerkUserID,
@@ -261,7 +264,7 @@ func (r *UserRepository) List(ctx context.Context) ([]models.User, error) {
 		ORDER BY created_at DESC
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}

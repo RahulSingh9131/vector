@@ -541,3 +541,19 @@ type ListMyActivityRequest struct {
 func (r *ListMyActivityRequest) Validate() error {
 	return validate.Struct(r)
 }
+
+// ListOrgActivityRequest represents query params for listing organization-level activity
+type ListOrgActivityRequest struct {
+	OrgID      string  `param:"orgId" validate:"required,uuid"`
+	Page       int     `query:"page" validate:"omitempty,min=1"`
+	Limit      int     `query:"limit" validate:"omitempty,min=1,max=100"`
+	Action     *string `query:"action" validate:"omitempty"`
+	EntityType *string `query:"entity_type" validate:"omitempty"`
+	ActorID    *string `query:"actor_id" validate:"omitempty,uuid"`
+	From       *string `query:"from" validate:"omitempty"`
+	To         *string `query:"to" validate:"omitempty"`
+}
+
+func (r *ListOrgActivityRequest) Validate() error {
+	return validate.Struct(r)
+}

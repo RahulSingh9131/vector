@@ -343,6 +343,105 @@ func (r *ActivityRepository) ListByActor(ctx context.Context, actorID uuid.UUID,
 	return activities, total, nil
 }
 
+// ListByOrganization retrieves activities across all projects within an organization
+// that the given user is a member of (newest first, paginated, with optional filters).
+func (r *ActivityRepository) ListByOrganization(ctx context.Context, orgID, userID uuid.UUID, page, limit int, filters models.ActivityFilters) ([]models.ActivityWithActor, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	// Base WHERE: project belongs to org AND user is a member of the project
+	where := "WHERE p.organization_id = $1 AND pm.user_id = $2"
+	args := []interface{}{orgID, userID}
+	argIdx := 3
+
+	if filters.Action != nil {
+		where += fmt.Sprintf(" AND a.action = $%d", argIdx)
+		args = append(args, *filters.Action)
+		argIdx++
+	}
+	if filters.EntityType != nil {
+		where += fmt.Sprintf(" AND a.entity_type = $%d", argIdx)
+		args = append(args, *filters.EntityType)
+		argIdx++
+	}
+	if filters.ActorID != nil {
+		where += fmt.Sprintf(" AND a.actor_id = $%d", argIdx)
+		args = append(args, *filters.ActorID)
+		argIdx++
+	}
+	if filters.From != nil {
+		where += fmt.Sprintf(" AND a.created_at >= $%d", argIdx)
+		args = append(args, *filters.From)
+		argIdx++
+	}
+	if filters.To != nil {
+		where += fmt.Sprintf(" AND a.created_at <= $%d", argIdx)
+		args = append(args, *filters.To)
+		argIdx++
+	}
+
+	// Count total with filters
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM activities a
+		JOIN projects p ON p.id = a.project_id
+		JOIN project_members pm ON pm.project_id = p.id
+		%s
+	`, where)
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Fetch with actor details
+	query := fmt.Sprintf(`
+		SELECT a.id, a.project_id, a.issue_id, a.actor_id, a.action, a.entity_type, a.entity_id,
+		       a.old_value, a.new_value, a.metadata, a.created_at,
+		       u.first_name AS actor_first_name, u.last_name AS actor_last_name,
+		       u.avatar_url AS actor_avatar_url, u.email AS actor_email
+		FROM activities a
+		JOIN projects p ON p.id = a.project_id
+		JOIN project_members pm ON pm.project_id = p.id
+		LEFT JOIN users u ON u.id = a.actor_id
+		%s
+		ORDER BY a.created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, where, argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var activities []models.ActivityWithActor
+	for rows.Next() {
+		var a models.ActivityWithActor
+		if err := rows.Scan(
+			&a.ID, &a.ProjectID, &a.IssueID, &a.ActorID,
+			&a.Action, &a.EntityType, &a.EntityID,
+			&a.OldValue, &a.NewValue, &a.Metadata, &a.CreatedAt,
+			&a.ActorFirstName, &a.ActorLastName,
+			&a.ActorAvatarURL, &a.ActorEmail,
+		); err != nil {
+			return nil, 0, err
+		}
+		activities = append(activities, a)
+	}
+
+	if activities == nil {
+		activities = []models.ActivityWithActor{}
+	}
+
+	return activities, total, nil
+}
+
 // nullableJSON returns nil if the byte slice is nil/empty, otherwise returns the slice
 func nullableJSON(b []byte) interface{} {
 	if len(b) == 0 {

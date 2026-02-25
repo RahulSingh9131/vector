@@ -205,6 +205,16 @@ export const ActivityWithActorSchema = ActivitySchema.extend({
     actor_email: z.string(),
 }).openapi("ActivityWithActor");
 
+export const ActivitySummaryItemSchema = z.object({
+    key: z.string(),
+    count: z.number(),
+}).openapi("ActivitySummaryItem");
+
+export const ActivitySummaryResponseSchema = z.object({
+    data: z.array(ActivitySummaryItemSchema),
+    total_count: z.number(),
+}).openapi("ActivitySummaryResponse");
+
 // --- Type Exports ---
 
 export type Project = z.infer<typeof ProjectSchema>;
@@ -231,3 +241,5 @@ export type CreateComment = z.infer<typeof CreateCommentSchema>;
 export type UpdateComment = z.infer<typeof UpdateCommentSchema>;
 export type Activity = z.infer<typeof ActivitySchema>;
 export type ActivityWithActor = z.infer<typeof ActivityWithActorSchema>;
+export type ActivitySummaryItem = z.infer<typeof ActivitySummaryItemSchema>;
+export type ActivitySummaryResponse = z.infer<typeof ActivitySummaryResponseSchema>;

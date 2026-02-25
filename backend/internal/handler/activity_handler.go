@@ -132,3 +132,59 @@ func (h *ActivityHandler) ListOrgActivity(c echo.Context, req *ListOrgActivityRe
 func (h *ActivityHandler) RegisterOrgRoutes(g *echo.Group) {
 	g.GET("", Handle(h.Handler, h.ListOrgActivity, http.StatusOK, &ListOrgActivityRequest{}))
 }
+
+// ProjectActivitySummary returns aggregated activity counts for a project
+func (h *ActivityHandler) ProjectActivitySummary(c echo.Context, req *ProjectActivitySummaryRequest) (*models.ActivitySummaryResponse, error) {
+	projectID, _ := uuid.Parse(req.ProjectID)
+
+	filters, err := parseActivityFilters(req.Action, req.EntityType, req.ActorID, req.From, req.To)
+	if err != nil {
+		return nil, err
+	}
+
+	groupBy := ""
+	if req.GroupBy != nil {
+		groupBy = *req.GroupBy
+	}
+	interval := ""
+	if req.Interval != nil {
+		interval = *req.Interval
+	}
+
+	return h.services.Activity.SummaryByProject(c.Request().Context(), projectID, groupBy, interval, filters)
+}
+
+// OrgActivitySummary returns aggregated activity counts across an organization
+func (h *ActivityHandler) OrgActivitySummary(c echo.Context, req *OrgActivitySummaryRequest) (*models.ActivitySummaryResponse, error) {
+	orgID, _ := uuid.Parse(req.OrgID)
+	user, ok := c.Get("user").(*models.User)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
+
+	filters, err := parseActivityFilters(req.Action, req.EntityType, req.ActorID, req.From, req.To)
+	if err != nil {
+		return nil, err
+	}
+
+	groupBy := ""
+	if req.GroupBy != nil {
+		groupBy = *req.GroupBy
+	}
+	interval := ""
+	if req.Interval != nil {
+		interval = *req.Interval
+	}
+
+	return h.services.Activity.SummaryByOrganization(c.Request().Context(), orgID, user.ID, groupBy, interval, filters)
+}
+
+// RegisterProjectSummaryRoutes registers the project activity summary route
+func (h *ActivityHandler) RegisterProjectSummaryRoutes(g *echo.Group) {
+	g.GET("", Handle(h.Handler, h.ProjectActivitySummary, http.StatusOK, &ProjectActivitySummaryRequest{}))
+}
+
+// RegisterOrgSummaryRoutes registers the org activity summary route
+func (h *ActivityHandler) RegisterOrgSummaryRoutes(g *echo.Group) {
+	g.GET("", Handle(h.Handler, h.OrgActivitySummary, http.StatusOK, &OrgActivitySummaryRequest{}))
+}

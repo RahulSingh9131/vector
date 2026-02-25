@@ -31,6 +31,10 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		orgActivity := orgs.Group("/:orgId/activity")
 		h.Activity.RegisterOrgRoutes(orgActivity)
 
+		// Organization activity summary (nested under organizations)
+		orgActivitySummary := orgs.Group("/:orgId/activity/summary")
+		h.Activity.RegisterOrgSummaryRoutes(orgActivitySummary)
+
 		// Project routes (nested under organizations)
 		projects := orgs.Group("/:orgId/projects")
 		h.Project.RegisterRoutes(projects)
@@ -58,5 +62,9 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		// Project activity feed (nested under projects)
 		projectActivity := projects.Group("/:projectId/activity")
 		h.Activity.RegisterProjectRoutes(projectActivity)
+
+		// Project activity summary (nested under projects)
+		projectActivitySummary := projects.Group("/:projectId/activity/summary")
+		h.Activity.RegisterProjectSummaryRoutes(projectActivitySummary)
 	}
 }

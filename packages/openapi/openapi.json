@@ -8231,6 +8231,336 @@
           }
         }
       }
+    },
+    "/api/v1/organizations/{orgId}/projects/{projectId}/activity/summary": {
+      "get": {
+        "summary": "Get aggregated activity counts for a project",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "schema": {
+              "default": "action",
+              "type": "string",
+              "enum": [
+                "action",
+                "entity_type",
+                "actor_id",
+                "date"
+              ]
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "default": "day",
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "operationId": "projectActivitySummary",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "0": "A",
+                        "1": "c",
+                        "2": "t",
+                        "3": "i",
+                        "4": "v",
+                        "5": "i",
+                        "6": "t",
+                        "7": "y",
+                        "8": "S",
+                        "9": "u",
+                        "10": "m",
+                        "11": "m",
+                        "12": "a",
+                        "13": "r",
+                        "14": "y",
+                        "15": "I",
+                        "16": "t",
+                        "17": "e",
+                        "18": "m",
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "count"
+                        ]
+                      }
+                    },
+                    "total_count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total_count"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{orgId}/activity/summary": {
+      "get": {
+        "summary": "Get aggregated activity counts for an organization",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "schema": {
+              "default": "action",
+              "type": "string",
+              "enum": [
+                "action",
+                "entity_type",
+                "actor_id",
+                "date"
+              ]
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "default": "day",
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "operationId": "orgActivitySummary",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "0": "A",
+                        "1": "c",
+                        "2": "t",
+                        "3": "i",
+                        "4": "v",
+                        "5": "i",
+                        "6": "t",
+                        "7": "y",
+                        "8": "S",
+                        "9": "u",
+                        "10": "m",
+                        "11": "m",
+                        "12": "a",
+                        "13": "r",
+                        "14": "y",
+                        "15": "I",
+                        "16": "t",
+                        "17": "e",
+                        "18": "m",
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "count"
+                        ]
+                      }
+                    },
+                    "total_count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total_count"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "info": {

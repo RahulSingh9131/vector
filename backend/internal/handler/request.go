@@ -557,3 +557,36 @@ type ListOrgActivityRequest struct {
 func (r *ListOrgActivityRequest) Validate() error {
 	return validate.Struct(r)
 }
+
+// ProjectActivitySummaryRequest represents query params for project activity summary
+type ProjectActivitySummaryRequest struct {
+	OrgID      string  `param:"orgId" validate:"required,uuid"`
+	ProjectID  string  `param:"projectId" validate:"required,uuid"`
+	GroupBy    *string `query:"group_by" validate:"omitempty,oneof=action entity_type actor_id date"`
+	Interval   *string `query:"interval" validate:"omitempty,oneof=day week month"`
+	Action     *string `query:"action" validate:"omitempty"`
+	EntityType *string `query:"entity_type" validate:"omitempty"`
+	ActorID    *string `query:"actor_id" validate:"omitempty,uuid"`
+	From       *string `query:"from" validate:"omitempty"`
+	To         *string `query:"to" validate:"omitempty"`
+}
+
+func (r *ProjectActivitySummaryRequest) Validate() error {
+	return validate.Struct(r)
+}
+
+// OrgActivitySummaryRequest represents query params for organization activity summary
+type OrgActivitySummaryRequest struct {
+	OrgID      string  `param:"orgId" validate:"required,uuid"`
+	GroupBy    *string `query:"group_by" validate:"omitempty,oneof=action entity_type actor_id date"`
+	Interval   *string `query:"interval" validate:"omitempty,oneof=day week month"`
+	Action     *string `query:"action" validate:"omitempty"`
+	EntityType *string `query:"entity_type" validate:"omitempty"`
+	ActorID    *string `query:"actor_id" validate:"omitempty,uuid"`
+	From       *string `query:"from" validate:"omitempty"`
+	To         *string `query:"to" validate:"omitempty"`
+}
+
+func (r *OrgActivitySummaryRequest) Validate() error {
+	return validate.Struct(r)
+}

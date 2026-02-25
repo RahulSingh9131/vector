@@ -5,6 +5,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -138,4 +139,82 @@ func (s *ActivityService) ListByOrganization(ctx context.Context, orgID, userID 
 		Limit:      limit,
 		TotalPages: totalPages,
 	}, nil
+}
+
+// Allowed values for group_by and interval parameters
+var allowedGroupBy = map[string]bool{
+	"action":      true,
+	"entity_type": true,
+	"actor_id":    true,
+	"date":        true,
+}
+
+var allowedIntervals = map[string]bool{
+	"day":   true,
+	"week":  true,
+	"month": true,
+}
+
+// SummaryByProject returns aggregated activity counts for a project
+func (s *ActivityService) SummaryByProject(ctx context.Context, projectID uuid.UUID, groupBy, interval string, filters models.ActivityFilters) (*models.ActivitySummaryResponse, error) {
+	if groupBy == "" {
+		groupBy = "action"
+	}
+	if !allowedGroupBy[groupBy] {
+		return nil, errs.NewBadRequestError(
+			"Invalid group_by value. Must be one of: action, entity_type, actor_id, date",
+			true, nil, nil, nil,
+		)
+	}
+
+	if groupBy == "date" {
+		if interval == "" {
+			interval = "day"
+		}
+		if !allowedIntervals[interval] {
+			return nil, errs.NewBadRequestError(
+				"Invalid interval value. Must be one of: day, week, month",
+				true, nil, nil, nil,
+			)
+		}
+	}
+
+	result, err := s.activityRepo.SummaryByProject(ctx, projectID, groupBy, interval, filters)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	return result, nil
+}
+
+// SummaryByOrganization returns aggregated activity counts across an org (scoped to user's projects)
+func (s *ActivityService) SummaryByOrganization(ctx context.Context, orgID, userID uuid.UUID, groupBy, interval string, filters models.ActivityFilters) (*models.ActivitySummaryResponse, error) {
+	if groupBy == "" {
+		groupBy = "action"
+	}
+	if !allowedGroupBy[groupBy] {
+		return nil, errs.NewBadRequestError(
+			"Invalid group_by value. Must be one of: action, entity_type, actor_id, date",
+			true, nil, nil, nil,
+		)
+	}
+
+	if groupBy == "date" {
+		if interval == "" {
+			interval = "day"
+		}
+		if !allowedIntervals[interval] {
+			return nil, errs.NewBadRequestError(
+				"Invalid interval value. Must be one of: day, week, month",
+				true, nil, nil, nil,
+			)
+		}
+	}
+
+	result, err := s.activityRepo.SummaryByOrganization(ctx, orgID, userID, groupBy, interval, filters)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	return result, nil
 }

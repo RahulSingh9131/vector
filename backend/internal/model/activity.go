@@ -53,3 +53,15 @@ type ActivityFilters struct {
 	From       *time.Time // activities created on or after this time
 	To         *time.Time // activities created on or before this time
 }
+
+// ActivitySummaryItem represents a single row in an aggregated summary
+type ActivitySummaryItem struct {
+	Key   string `json:"key"`
+	Count int    `json:"count"`
+}
+
+// ActivitySummaryResponse is the response for activity summary endpoints
+type ActivitySummaryResponse struct {
+	Data       []ActivitySummaryItem `json:"data"`
+	TotalCount int                   `json:"total_count"`
+}

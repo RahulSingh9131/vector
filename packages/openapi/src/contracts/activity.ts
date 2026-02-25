@@ -1,6 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
-import { ActivityWithActorSchema } from "@vector/zod";
+import { ActivityWithActorSchema, ActivitySummaryItemSchema } from "@vector/zod";
 
 const c = initContract();
 
@@ -81,5 +81,49 @@ export const activityContract = c.router({
             }),
         },
         summary: "List organization activity feed (scoped to user's projects)",
+    },
+    projectActivitySummary: {
+        method: "GET",
+        path: "/organizations/:orgId/projects/:projectId/activity/summary",
+        query: z.object({
+            group_by: z
+                .enum(["action", "entity_type", "actor_id", "date"])
+                .optional()
+                .default("action"),
+            interval: z
+                .enum(["day", "week", "month"])
+                .optional()
+                .default("day"),
+            ...activityFilterQuery,
+        }),
+        responses: {
+            200: z.object({
+                data: z.array(ActivitySummaryItemSchema),
+                total_count: z.number(),
+            }),
+        },
+        summary: "Get aggregated activity counts for a project",
+    },
+    orgActivitySummary: {
+        method: "GET",
+        path: "/organizations/:orgId/activity/summary",
+        query: z.object({
+            group_by: z
+                .enum(["action", "entity_type", "actor_id", "date"])
+                .optional()
+                .default("action"),
+            interval: z
+                .enum(["day", "week", "month"])
+                .optional()
+                .default("day"),
+            ...activityFilterQuery,
+        }),
+        responses: {
+            200: z.object({
+                data: z.array(ActivitySummaryItemSchema),
+                total_count: z.number(),
+            }),
+        },
+        summary: "Get aggregated activity counts for an organization",
     },
 });

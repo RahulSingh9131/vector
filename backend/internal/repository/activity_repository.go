@@ -442,6 +442,174 @@ func (r *ActivityRepository) ListByOrganization(ctx context.Context, orgID, user
 	return activities, total, nil
 }
 
+// groupByColumn maps a validated group-by dimension to the SQL expression used in SELECT and GROUP BY.
+// The groupBy value MUST be validated before calling this function.
+func groupByColumn(groupBy, interval string) string {
+	switch groupBy {
+	case "action":
+		return "a.action"
+	case "entity_type":
+		return "a.entity_type"
+	case "actor_id":
+		return "a.actor_id::text"
+	case "date":
+		return fmt.Sprintf("date_trunc('%s', a.created_at)::date", interval)
+	default:
+		return "a.action"
+	}
+}
+
+// SummaryByProject returns aggregated activity counts for a project, grouped by the specified dimension.
+func (r *ActivityRepository) SummaryByProject(ctx context.Context, projectID uuid.UUID, groupBy, interval string, filters models.ActivityFilters) (*models.ActivitySummaryResponse, error) {
+	col := groupByColumn(groupBy, interval)
+
+	where := "WHERE a.project_id = $1"
+	args := []interface{}{projectID}
+	argIdx := 2
+
+	if filters.Action != nil {
+		where += fmt.Sprintf(" AND a.action = $%d", argIdx)
+		args = append(args, *filters.Action)
+		argIdx++
+	}
+	if filters.EntityType != nil {
+		where += fmt.Sprintf(" AND a.entity_type = $%d", argIdx)
+		args = append(args, *filters.EntityType)
+		argIdx++
+	}
+	if filters.ActorID != nil {
+		where += fmt.Sprintf(" AND a.actor_id = $%d", argIdx)
+		args = append(args, *filters.ActorID)
+		argIdx++
+	}
+	if filters.From != nil {
+		where += fmt.Sprintf(" AND a.created_at >= $%d", argIdx)
+		args = append(args, *filters.From)
+		argIdx++
+	}
+	if filters.To != nil {
+		where += fmt.Sprintf(" AND a.created_at <= $%d", argIdx)
+		args = append(args, *filters.To)
+		argIdx++
+	}
+
+	orderDir := "ASC"
+	if groupBy == "date" {
+		orderDir = "DESC"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT %s AS key, COUNT(*) AS count
+		FROM activities a
+		%s
+		GROUP BY key
+		ORDER BY %s %s
+	`, col, where, "key", orderDir)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []models.ActivitySummaryItem
+	totalCount := 0
+	for rows.Next() {
+		var item models.ActivitySummaryItem
+		if err := rows.Scan(&item.Key, &item.Count); err != nil {
+			return nil, err
+		}
+		totalCount += item.Count
+		items = append(items, item)
+	}
+
+	if items == nil {
+		items = []models.ActivitySummaryItem{}
+	}
+
+	return &models.ActivitySummaryResponse{
+		Data:       items,
+		TotalCount: totalCount,
+	}, nil
+}
+
+// SummaryByOrganization returns aggregated activity counts across all projects in an org
+// that the given user is a member of, grouped by the specified dimension.
+func (r *ActivityRepository) SummaryByOrganization(ctx context.Context, orgID, userID uuid.UUID, groupBy, interval string, filters models.ActivityFilters) (*models.ActivitySummaryResponse, error) {
+	col := groupByColumn(groupBy, interval)
+
+	where := "WHERE p.organization_id = $1 AND pm.user_id = $2"
+	args := []interface{}{orgID, userID}
+	argIdx := 3
+
+	if filters.Action != nil {
+		where += fmt.Sprintf(" AND a.action = $%d", argIdx)
+		args = append(args, *filters.Action)
+		argIdx++
+	}
+	if filters.EntityType != nil {
+		where += fmt.Sprintf(" AND a.entity_type = $%d", argIdx)
+		args = append(args, *filters.EntityType)
+		argIdx++
+	}
+	if filters.ActorID != nil {
+		where += fmt.Sprintf(" AND a.actor_id = $%d", argIdx)
+		args = append(args, *filters.ActorID)
+		argIdx++
+	}
+	if filters.From != nil {
+		where += fmt.Sprintf(" AND a.created_at >= $%d", argIdx)
+		args = append(args, *filters.From)
+		argIdx++
+	}
+	if filters.To != nil {
+		where += fmt.Sprintf(" AND a.created_at <= $%d", argIdx)
+		args = append(args, *filters.To)
+		argIdx++
+	}
+
+	orderDir := "ASC"
+	if groupBy == "date" {
+		orderDir = "DESC"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT %s AS key, COUNT(*) AS count
+		FROM activities a
+		JOIN projects p ON p.id = a.project_id
+		JOIN project_members pm ON pm.project_id = p.id
+		%s
+		GROUP BY key
+		ORDER BY %s %s
+	`, col, where, "key", orderDir)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []models.ActivitySummaryItem
+	totalCount := 0
+	for rows.Next() {
+		var item models.ActivitySummaryItem
+		if err := rows.Scan(&item.Key, &item.Count); err != nil {
+			return nil, err
+		}
+		totalCount += item.Count
+		items = append(items, item)
+	}
+
+	if items == nil {
+		items = []models.ActivitySummaryItem{}
+	}
+
+	return &models.ActivitySummaryResponse{
+		Data:       items,
+		TotalCount: totalCount,
+	}, nil
+}
+
 // nullableJSON returns nil if the byte slice is nil/empty, otherwise returns the slice
 func nullableJSON(b []byte) interface{} {
 	if len(b) == 0 {

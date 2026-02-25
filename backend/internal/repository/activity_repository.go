@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/RahulSingh9131/vector/internal/database"
 	models "github.com/RahulSingh9131/vector/internal/model"
@@ -608,6 +609,26 @@ func (r *ActivityRepository) SummaryByOrganization(ctx context.Context, orgID, u
 		Data:       items,
 		TotalCount: totalCount,
 	}, nil
+}
+
+// DeleteOlderThan deletes a batch of activities created before the given time.
+// Returns the number of rows deleted. Call repeatedly until 0 is returned.
+func (r *ActivityRepository) DeleteOlderThan(ctx context.Context, before time.Time, batchSize int) (int64, error) {
+	query := `
+		DELETE FROM activities
+		WHERE id IN (
+			SELECT id FROM activities
+			WHERE created_at < $1
+			LIMIT $2
+		)
+	`
+
+	result, err := r.db.Exec(ctx, query, before, batchSize)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected(), nil
 }
 
 // nullableJSON returns nil if the byte slice is nil/empty, otherwise returns the slice

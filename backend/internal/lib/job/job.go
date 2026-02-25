@@ -3,6 +3,7 @@ package job
 
 import (
 	"github.com/RahulSingh9131/vector/internal/config"
+	"github.com/RahulSingh9131/vector/internal/database"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 )
@@ -10,7 +11,9 @@ import (
 type JobService struct {
 	Client           *asynq.Client
 	server           *asynq.Server
+	scheduler        *asynq.Scheduler
 	logger           *zerolog.Logger
+	db               database.DBTX
 	eventHandlerFunc asynq.HandlerFunc
 }
 
@@ -32,10 +35,15 @@ func NewJobService(logger *zerolog.Logger, cfg *config.Config) *JobService {
 		},
 	})
 
+	scheduler := asynq.NewScheduler(asynq.RedisClientOpt{
+		Addr: redisAddr,
+	}, nil)
+
 	return &JobService{
-		Client: client,
-		server: server,
-		logger: logger,
+		Client:    client,
+		server:    server,
+		scheduler: scheduler,
+		logger:    logger,
 	}
 }
 
@@ -65,10 +73,30 @@ func (js *JobService) Start() error {
 			"event:comment.deleted",
 			"event:label.added",
 			"event:label.removed",
+			"event:project.created",
+			"event:project.updated",
+			"event:project.deleted",
+			"event:member.added",
+			"event:member.removed",
+			"event:member.role_changed",
 		}
 		for _, t := range eventTypes {
 			mux.HandleFunc(t, js.eventHandlerFunc)
 		}
+	}
+
+	// Register cleanup task handler
+	mux.HandleFunc(TaskActivityCleanup, js.handleActivityCleanupTask)
+
+	// Schedule periodic activity cleanup — daily at 3 AM
+	_, err := js.scheduler.Register("0 3 * * *", asynq.NewTask(TaskActivityCleanup, nil))
+	if err != nil {
+		return err
+	}
+
+	// Start the scheduler
+	if err := js.scheduler.Start(); err != nil {
+		return err
 	}
 
 	js.logger.Info().Msg("Starting background job Server")
@@ -81,6 +109,7 @@ func (js *JobService) Start() error {
 
 func (js *JobService) Stop() {
 	js.logger.Info().Msg("Stopping background job Server")
+	js.scheduler.Shutdown()
 	js.server.Shutdown()
 	js.Client.Close()
 }

@@ -1,3 +1,5 @@
+// Package server provides the core server infrastructure, including
+// database, Redis, HTTP server, and background job service initialization.
 package server
 
 import (
@@ -53,7 +55,7 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *logger.Logge
 
 	// Initialize job service (started from main.go after event handlers are registered)
 	jobService := job.NewJobService(logger, cfg)
-	jobService.InitHandlers(cfg, logger)
+	jobService.InitHandlers(cfg, logger, db.Pool)
 
 	return &Server{
 		Config:        cfg,

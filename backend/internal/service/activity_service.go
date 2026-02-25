@@ -114,3 +114,28 @@ func (s *ActivityService) ListByActor(ctx context.Context, actorID uuid.UUID, pa
 		TotalPages: totalPages,
 	}, nil
 }
+
+// ListByOrganization retrieves paginated activities across all projects in an org that the user is a member of
+func (s *ActivityService) ListByOrganization(ctx context.Context, orgID, userID uuid.UUID, page, limit int, filters models.ActivityFilters) (*models.PaginatedResponse[models.ActivityWithActor], error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	activities, total, err := s.activityRepo.ListByOrganization(ctx, orgID, userID, page, limit, filters)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	return &models.PaginatedResponse[models.ActivityWithActor]{
+		Data:       activities,
+		Total:      total,
+		Page:       page,
+		Limit:      limit,
+		TotalPages: totalPages,
+	}, nil
+}

@@ -27,6 +27,10 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		orgs := api.Group("/organizations")
 		h.Organization.RegisterRoutes(orgs)
 
+		// Organization activity feed (nested under organizations)
+		orgActivity := orgs.Group("/:orgId/activity")
+		h.Activity.RegisterOrgRoutes(orgActivity)
+
 		// Project routes (nested under organizations)
 		projects := orgs.Group("/:orgId/projects")
 		h.Project.RegisterRoutes(projects)

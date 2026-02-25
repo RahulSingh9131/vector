@@ -111,3 +111,24 @@ func (h *ActivityHandler) ListMyActivity(c echo.Context, req *ListMyActivityRequ
 func (h *ActivityHandler) RegisterUserRoutes(g *echo.Group) {
 	g.GET("", Handle(h.Handler, h.ListMyActivity, http.StatusOK, &ListMyActivityRequest{}))
 }
+
+// ListOrgActivity returns the activity feed for an organization (scoped to projects the user is a member of)
+func (h *ActivityHandler) ListOrgActivity(c echo.Context, req *ListOrgActivityRequest) (*models.PaginatedResponse[models.ActivityWithActor], error) {
+	orgID, _ := uuid.Parse(req.OrgID)
+	user, ok := c.Get("user").(*models.User)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
+
+	filters, err := parseActivityFilters(req.Action, req.EntityType, req.ActorID, req.From, req.To)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.services.Activity.ListByOrganization(c.Request().Context(), orgID, user.ID, req.Page, req.Limit, filters)
+}
+
+// RegisterOrgRoutes registers organization activity routes
+func (h *ActivityHandler) RegisterOrgRoutes(g *echo.Group) {
+	g.GET("", Handle(h.Handler, h.ListOrgActivity, http.StatusOK, &ListOrgActivityRequest{}))
+}

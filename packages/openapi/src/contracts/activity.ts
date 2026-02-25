@@ -67,4 +67,19 @@ export const activityContract = c.router({
         },
         summary: "List authenticated user's activity across all projects",
     },
+    listOrgActivity: {
+        method: "GET",
+        path: "/organizations/:orgId/activity",
+        query: z.object(activityFilterQuery),
+        responses: {
+            200: z.object({
+                data: z.array(ActivityWithActorSchema),
+                total: z.number(),
+                page: z.number(),
+                limit: z.number(),
+                total_pages: z.number(),
+            }),
+        },
+        summary: "List organization activity feed (scoped to user's projects)",
+    },
 });

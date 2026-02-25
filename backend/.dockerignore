@@ -1,0 +1,28 @@
+# Dependencies & build artifacts
+bin/
+tmp/
+vendor/
+
+# Environment & config
+.env
+.env.*
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Docs & meta
+*.md
+.golangci.yml
+Taskfile.yml
+
+# Git
+.git
+.gitignore
+
+# Test artifacts
+coverage.out
+*.test

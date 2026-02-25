@@ -1,3 +1,4 @@
+// Package errs provides custom error types and utilities for HTTP error handling.
 package errs
 
 import "strings"

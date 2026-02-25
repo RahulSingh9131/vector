@@ -1,3 +1,5 @@
+// Package config provides application configuration loading and validation
+// from environment variables using koanf.
 package config
 
 import (

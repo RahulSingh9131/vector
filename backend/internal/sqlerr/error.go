@@ -1,3 +1,5 @@
+// Package sqlerr provides structured error types and utilities for mapping
+// database-specific error codes and severities into application-level constants.
 package sqlerr
 
 // Code describes a specific type of database error.

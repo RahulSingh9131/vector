@@ -7,18 +7,6 @@ run:
   
   # Include test files or not.
   tests: true
-  
-  # Which dirs to skip: issues from them won't be reported.
-  skip-dirs:
-    - vendor
-    - tmp
-    - bin
-    - dist
-
-  # Which files to skip: they will be analyzed, but issues from them won't be reported.
-  skip-files:
-    - ".*\\.pb\\.go$"
-    - ".*\\.gen\\.go$"
 
 # Output configuration options
 output:
@@ -87,9 +75,7 @@ linters-settings:
     # Tab width in spaces.
     tab-width: 4
 
-  unused:
-    # Don't check exported identifiers
-    pass: ""
+  unused: {}
 
   unparam:
     # Inspect exported functions.

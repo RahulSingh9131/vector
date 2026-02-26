@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Initialize router
-	r := router.NewRouter(srv, handlers, services)
+	r := router.NewRouter(srv, handlers, services, repos)
 
 	// Setup HTTP server
 	srv.SetupHTTPServer(r)

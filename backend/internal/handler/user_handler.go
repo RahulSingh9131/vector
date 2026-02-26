@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -84,15 +82,3 @@ func (h *UserHandler) UpdateCurrentUser(c echo.Context, req *UpdateCurrentUserRe
 	return updatedUser, nil
 }
 
-// RegisterRoutes registers all user routes
-func (h *UserHandler) RegisterRoutes(g *echo.Group) {
-	// Profile routes
-	g.GET("/me", Handle(h.Handler, h.GetCurrentUser, http.StatusOK, &EmptyRequest{}))
-	g.PUT("/me", Handle(h.Handler, h.UpdateCurrentUser, http.StatusOK, &UpdateCurrentUserRequest{}))
-
-	// Management routes
-	g.GET("/users", Handle(h.Handler, h.ListUsers, http.StatusOK, &EmptyRequest{}))
-	g.POST("/users", Handle(h.Handler, h.CreateUser, http.StatusCreated, &CreateUserRequest{}))
-	g.GET("/users/:id", Handle(h.Handler, h.GetUser, http.StatusOK, &GetUserRequest{}))
-	g.DELETE("/users/:id", Handle(h.Handler, h.DeleteUser, http.StatusNoContent, &DeleteUserRequest{}))
-}

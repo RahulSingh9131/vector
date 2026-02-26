@@ -1,3 +1,5 @@
+// Package middleware provides HTTP middleware functions for the Vector API,
+// including authentication, authorization, RBAC, and request context handling.
 package middleware
 
 import (
@@ -81,7 +83,7 @@ func (auth *AuthMiddleware) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc 
 			// Use context.Background() to ensure the background task completes
 			// even after the HTTP request context is canceled.
 			bgCtx := context.Background()
-			
+
 			auth.server.Logger.Debug().
 				Str("user_id", user.ID.String()).
 				Msg("starting background record login task")

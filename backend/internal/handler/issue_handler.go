@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -159,15 +157,4 @@ func (h *IssueHandler) UpdateIssueStatus(c echo.Context, req *UpdateIssueStatusR
 	}
 
 	return h.services.Issue.UpdateStatus(c.Request().Context(), issueID, userID, req.Status)
-}
-
-// RegisterRoutes registers all issue routes
-func (h *IssueHandler) RegisterRoutes(g *echo.Group) {
-	g.POST("", Handle(h.Handler, h.CreateIssue, http.StatusCreated, &CreateIssueRequest{}))
-	g.GET("", Handle(h.Handler, h.ListIssues, http.StatusOK, &ListIssuesRequest{}))
-	g.GET("/:issueId", Handle(h.Handler, h.GetIssue, http.StatusOK, &GetIssueRequest{}))
-	g.PATCH("/:issueId", Handle(h.Handler, h.UpdateIssue, http.StatusOK, &UpdateIssueRequest{}))
-	g.DELETE("/:issueId", Handle(h.Handler, h.DeleteIssue, http.StatusNoContent, &DeleteIssueRequest{}))
-	g.PATCH("/:issueId/assign", Handle(h.Handler, h.AssignIssue, http.StatusOK, &AssignIssueRequest{}))
-	g.PATCH("/:issueId/status", Handle(h.Handler, h.UpdateIssueStatus, http.StatusOK, &UpdateIssueStatusRequest{}))
 }

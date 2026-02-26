@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -85,13 +83,4 @@ func (h *CommentHandler) DeleteComment(c echo.Context, req *DeleteCommentRequest
 	}
 
 	return &EmptyResponse{}, nil
-}
-
-// RegisterRoutes registers comment routes
-func (h *CommentHandler) RegisterRoutes(g *echo.Group) {
-	g.POST("", Handle(h.Handler, h.CreateComment, http.StatusCreated, &CreateCommentRequest{}))
-	g.GET("", Handle(h.Handler, h.ListComments, http.StatusOK, &ListCommentsRequest{}))
-	g.GET("/:commentId", Handle(h.Handler, h.GetComment, http.StatusOK, &GetCommentRequest{}))
-	g.PATCH("/:commentId", Handle(h.Handler, h.UpdateComment, http.StatusOK, &UpdateCommentRequest{}))
-	g.DELETE("/:commentId", Handle(h.Handler, h.DeleteComment, http.StatusNoContent, &DeleteCommentRequest{}))
 }

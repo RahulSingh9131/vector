@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -107,20 +105,4 @@ func (h *LabelHandler) RemoveLabelFromIssue(c echo.Context, req *RemoveLabelFrom
 	}
 
 	return &EmptyResponse{}, nil
-}
-
-// RegisterRoutes registers label CRUD routes
-func (h *LabelHandler) RegisterRoutes(g *echo.Group) {
-	g.POST("", Handle(h.Handler, h.CreateLabel, http.StatusCreated, &CreateLabelRequest{}))
-	g.GET("", Handle(h.Handler, h.ListLabels, http.StatusOK, &ListLabelsRequest{}))
-	g.GET("/:labelId", Handle(h.Handler, h.GetLabel, http.StatusOK, &GetLabelRequest{}))
-	g.PATCH("/:labelId", Handle(h.Handler, h.UpdateLabel, http.StatusOK, &UpdateLabelRequest{}))
-	g.DELETE("/:labelId", Handle(h.Handler, h.DeleteLabel, http.StatusNoContent, &DeleteLabelRequest{}))
-}
-
-// RegisterIssueLabelRoutes registers issue-label association routes
-func (h *LabelHandler) RegisterIssueLabelRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.GetIssueLabels, http.StatusOK, &GetIssueLabelsRequest{}))
-	g.POST("", Handle(h.Handler, h.AddLabelToIssue, http.StatusCreated, &AddLabelToIssueRequest{}))
-	g.DELETE("/:labelId", Handle(h.Handler, h.RemoveLabelFromIssue, http.StatusNoContent, &RemoveLabelFromIssueRequest{}))
 }

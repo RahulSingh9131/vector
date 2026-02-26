@@ -5,6 +5,7 @@ import (
 
 	"github.com/RahulSingh9131/vector/internal/handler"
 	"github.com/RahulSingh9131/vector/internal/middleware"
+	"github.com/RahulSingh9131/vector/internal/repository"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/RahulSingh9131/vector/internal/service"
 	"github.com/labstack/echo/v4"
@@ -12,8 +13,8 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services) *echo.Echo {
-	middlewares := middleware.NewMiddlewares(s, services)
+func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services, repos *repository.Repositories) *echo.Echo {
+	middlewares := middleware.NewMiddlewares(s, services, repos)
 
 	router := echo.New()
 

@@ -1,4 +1,3 @@
-version: "2"
 run:
   # Timeout for analysis, e.g. 30s, 5m.
   timeout: 5m
@@ -25,17 +24,13 @@ run:
 output:
   # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate|html|junit-xml|github-actions
   formats:
-    colored-line-number:
-      path: stdout
+    - colored-line-number
   
   # Print lines of code with issue.
   print-issued-lines: true
   
   # Print linter name in the end of issue text.
   print-linter-name: true
-  
-  # Make issues output unique by line.
-  uniq-by-line: true
   
   # Sort results by: filepath, line and column.
   sort-results: true
@@ -92,8 +87,8 @@ linters-settings:
     tab-width: 4
 
   unused:
-    # Treat code as a program (not a library) and report unused exported identifiers.
-    check-exported: false
+    # Don't check exported identifiers
+    pass: ""
 
   unparam:
     # Inspect exported functions.
@@ -194,11 +189,6 @@ linters:
     - sqlclosecheck   # Checks that sql.Rows and sql.Stmt are closed
     - whitespace      # Detection of leading and trailing whitespace
     - errorlint       # Find code that will cause problems with the error wrapping scheme introduced in Go 1.13
-
-formatters:
-  enable:
-    - gofmt           # Checks whether code was gofmt-ed
-    - goimports       # Check import statements are formatted according to the 'goimport' command
 
 issues:
   # List of regexps of issue texts to exclude.

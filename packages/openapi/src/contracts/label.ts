@@ -24,6 +24,7 @@ export const labelContract = c.router({
             201: LabelSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Create a new label",
@@ -41,6 +42,7 @@ export const labelContract = c.router({
         responses: {
             200: z.array(LabelSchema),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "List all labels for a project",
         metadata: {
@@ -58,6 +60,7 @@ export const labelContract = c.router({
         responses: {
             200: LabelSchema,
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Get a label by ID",
@@ -78,6 +81,7 @@ export const labelContract = c.router({
             200: LabelSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Update a label",
@@ -97,6 +101,7 @@ export const labelContract = c.router({
         responses: {
             204: z.object({}),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Delete a label",
@@ -118,6 +123,7 @@ export const labelContract = c.router({
         responses: {
             200: z.array(LabelSchema),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Get all labels on an issue",
@@ -138,6 +144,7 @@ export const labelContract = c.router({
             201: z.object({}),
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Add a label to an issue",
@@ -158,6 +165,7 @@ export const labelContract = c.router({
         responses: {
             204: z.object({}),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Remove a label from an issue",

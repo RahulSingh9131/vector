@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/RahulSingh9131/vector/internal/errs"
@@ -82,15 +81,9 @@ func (h *ActivityHandler) ListProjectActivity(c echo.Context, req *ListProjectAc
 	return h.services.Activity.ListByProject(c.Request().Context(), projectID, req.Page, req.Limit, filters)
 }
 
-// RegisterIssueRoutes registers issue activity routes
-func (h *ActivityHandler) RegisterIssueRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.ListIssueActivity, http.StatusOK, &ListIssueActivityRequest{}))
-}
 
-// RegisterProjectRoutes registers project activity routes
-func (h *ActivityHandler) RegisterProjectRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.ListProjectActivity, http.StatusOK, &ListProjectActivityRequest{}))
-}
+
+
 
 // ListMyActivity returns the activity feed for the authenticated user across all projects
 func (h *ActivityHandler) ListMyActivity(c echo.Context, req *ListMyActivityRequest) (*models.PaginatedResponse[models.ActivityWithActor], error) {
@@ -107,10 +100,7 @@ func (h *ActivityHandler) ListMyActivity(c echo.Context, req *ListMyActivityRequ
 	return h.services.Activity.ListByActor(c.Request().Context(), user.ID, req.Page, req.Limit, filters)
 }
 
-// RegisterUserRoutes registers user activity routes (mounted under /me)
-func (h *ActivityHandler) RegisterUserRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.ListMyActivity, http.StatusOK, &ListMyActivityRequest{}))
-}
+
 
 // ListOrgActivity returns the activity feed for an organization (scoped to projects the user is a member of)
 func (h *ActivityHandler) ListOrgActivity(c echo.Context, req *ListOrgActivityRequest) (*models.PaginatedResponse[models.ActivityWithActor], error) {
@@ -128,10 +118,7 @@ func (h *ActivityHandler) ListOrgActivity(c echo.Context, req *ListOrgActivityRe
 	return h.services.Activity.ListByOrganization(c.Request().Context(), orgID, user.ID, req.Page, req.Limit, filters)
 }
 
-// RegisterOrgRoutes registers organization activity routes
-func (h *ActivityHandler) RegisterOrgRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.ListOrgActivity, http.StatusOK, &ListOrgActivityRequest{}))
-}
+
 
 // ProjectActivitySummary returns aggregated activity counts for a project
 func (h *ActivityHandler) ProjectActivitySummary(c echo.Context, req *ProjectActivitySummaryRequest) (*models.ActivitySummaryResponse, error) {
@@ -179,12 +166,3 @@ func (h *ActivityHandler) OrgActivitySummary(c echo.Context, req *OrgActivitySum
 	return h.services.Activity.SummaryByOrganization(c.Request().Context(), orgID, user.ID, groupBy, interval, filters)
 }
 
-// RegisterProjectSummaryRoutes registers the project activity summary route
-func (h *ActivityHandler) RegisterProjectSummaryRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.ProjectActivitySummary, http.StatusOK, &ProjectActivitySummaryRequest{}))
-}
-
-// RegisterOrgSummaryRoutes registers the org activity summary route
-func (h *ActivityHandler) RegisterOrgSummaryRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.OrgActivitySummary, http.StatusOK, &OrgActivitySummaryRequest{}))
-}

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/RahulSingh9131/vector/internal/errs"
@@ -136,20 +135,6 @@ func (h *ProjectHandler) RemoveMember(c echo.Context, req *RemoveProjectMemberRe
 	return &EmptyResponse{}, nil
 }
 
-// RegisterRoutes registers all project routes
-func (h *ProjectHandler) RegisterRoutes(g *echo.Group) {
-	g.POST("", Handle(h.Handler, h.CreateProject, http.StatusCreated, &CreateProjectRequest{}))
-	g.GET("", Handle(h.Handler, h.ListProjects, http.StatusOK, &ListProjectsRequest{}))
-	g.GET("/:projectId", Handle(h.Handler, h.GetProject, http.StatusOK, &GetProjectRequest{}))
-	g.PATCH("/:projectId", Handle(h.Handler, h.UpdateProject, http.StatusOK, &UpdateProjectRequest{}))
-	g.DELETE("/:projectId", Handle(h.Handler, h.DeleteProject, http.StatusNoContent, &DeleteProjectRequest{}))
-
-	// Member management
-	g.GET("/:projectId/members", Handle(h.Handler, h.ListMembers, http.StatusOK, &ListProjectMembersRequest{}))
-	g.POST("/:projectId/members", Handle(h.Handler, h.AddMember, http.StatusCreated, &AddProjectMemberRequest{}))
-	g.PATCH("/:projectId/members/:userId", Handle(h.Handler, h.UpdateMemberRole, http.StatusOK, &UpdateProjectMemberRoleRequest{}))
-	g.DELETE("/:projectId/members/:userId", Handle(h.Handler, h.RemoveMember, http.StatusNoContent, &RemoveProjectMemberRequest{}))
-}
 
 // parseTime parses a time string in RFC3339 format
 func parseTime(s string) *time.Time {

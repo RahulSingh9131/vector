@@ -24,6 +24,7 @@ export const projectContract = c.router({
             201: ProjectSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Create a new project",
@@ -40,6 +41,7 @@ export const projectContract = c.router({
         responses: {
             200: z.array(ProjectSchema),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "List projects the current user is a member of",
         metadata: {
@@ -56,6 +58,7 @@ export const projectContract = c.router({
         responses: {
             200: ProjectSchema,
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Get project by ID",
@@ -75,6 +78,7 @@ export const projectContract = c.router({
             200: ProjectSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Update a project",
@@ -93,6 +97,7 @@ export const projectContract = c.router({
         responses: {
             204: z.object({}),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Delete a project",
@@ -113,6 +118,7 @@ export const projectContract = c.router({
         responses: {
             200: z.array(ProjectMemberWithDetailsSchema),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "List project members",
@@ -132,6 +138,7 @@ export const projectContract = c.router({
             201: ProjectMemberSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Add a member to a project",
@@ -152,6 +159,7 @@ export const projectContract = c.router({
             200: ProjectMemberSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Update a project member's role",

@@ -24,6 +24,7 @@ export const commentContract = c.router({
             201: CommentWithAuthorSchema,
             400: z.object({ message: z.string() }),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Create a comment on an issue",
@@ -46,6 +47,7 @@ export const commentContract = c.router({
         responses: {
             200: schemaWithPagination(CommentThreadSchema),
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "List threaded comments for an issue",
         metadata: {
@@ -64,6 +66,7 @@ export const commentContract = c.router({
         responses: {
             200: CommentWithAuthorSchema,
             401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
         },
         summary: "Get a single comment",

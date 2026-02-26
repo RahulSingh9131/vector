@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/RahulSingh9131/vector/internal/errs"
 	models "github.com/RahulSingh9131/vector/internal/model"
 	"github.com/RahulSingh9131/vector/internal/server"
@@ -97,17 +95,4 @@ func (h *OrganizationHandler) RemoveMember(c echo.Context, req *RemoveMemberRequ
 	}
 
 	return &EmptyResponse{}, nil
-}
-
-// RegisterRoutes registers all organization routes
-func (h *OrganizationHandler) RegisterRoutes(g *echo.Group) {
-	g.GET("", Handle(h.Handler, h.ListOrganizations, http.StatusOK, &EmptyRequest{}))
-	g.POST("", Handle(h.Handler, h.CreateOrganization, http.StatusCreated, &CreateOrganizationRequest{}))
-	g.GET("/:id", Handle(h.Handler, h.GetOrganization, http.StatusOK, &GetOrganizationRequest{}))
-
-	// Member management
-	g.GET("/:id/members", Handle(h.Handler, h.ListMembers, http.StatusOK, &ListMembersRequest{}))
-	g.POST("/:id/members", Handle(h.Handler, h.AddMember, http.StatusCreated, &AddMemberRequest{}))
-	g.PATCH("/:id/members/:userId", Handle(h.Handler, h.UpdateMemberRole, http.StatusOK, &UpdateMemberRoleRequest{}))
-	g.DELETE("/:id/members/:userId", Handle(h.Handler, h.RemoveMember, http.StatusNoContent, &RemoveMemberRequest{}))
 }

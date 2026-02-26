@@ -27,8 +27,13 @@ export const activityContract = c.router({
                 limit: z.number(),
                 total_pages: z.number(),
             }),
+            401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "List issue activity timeline",
+        metadata: {
+            openApiSecurity: [{ bearerAuth: [] }],
+        },
     },
     listProjectActivity: {
         method: "GET",
@@ -42,8 +47,13 @@ export const activityContract = c.router({
                 limit: z.number(),
                 total_pages: z.number(),
             }),
+            401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "List project activity feed",
+        metadata: {
+            openApiSecurity: [{ bearerAuth: [] }],
+        },
     },
     listMyActivity: {
         method: "GET",
@@ -64,8 +74,12 @@ export const activityContract = c.router({
                 limit: z.number(),
                 total_pages: z.number(),
             }),
+            401: z.object({ message: z.string() }),
         },
         summary: "List authenticated user's activity across all projects",
+        metadata: {
+            openApiSecurity: [{ bearerAuth: [] }],
+        },
     },
     listOrgActivity: {
         method: "GET",
@@ -79,8 +93,13 @@ export const activityContract = c.router({
                 limit: z.number(),
                 total_pages: z.number(),
             }),
+            401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "List organization activity feed (scoped to user's projects)",
+        metadata: {
+            openApiSecurity: [{ bearerAuth: [] }],
+        },
     },
     projectActivitySummary: {
         method: "GET",
@@ -101,8 +120,13 @@ export const activityContract = c.router({
                 data: z.array(ActivitySummaryItemSchema),
                 total_count: z.number(),
             }),
+            401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "Get aggregated activity counts for a project",
+        metadata: {
+            openApiSecurity: [{ bearerAuth: [] }],
+        },
     },
     orgActivitySummary: {
         method: "GET",
@@ -123,7 +147,12 @@ export const activityContract = c.router({
                 data: z.array(ActivitySummaryItemSchema),
                 total_count: z.number(),
             }),
+            401: z.object({ message: z.string() }),
+            403: z.object({ message: z.string() }),
         },
         summary: "Get aggregated activity counts for an organization",
+        metadata: {
+            openApiSecurity: [{ bearerAuth: [] }],
+        },
     },
 });

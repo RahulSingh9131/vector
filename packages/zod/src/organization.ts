@@ -1,5 +1,7 @@
 import { z } from "./z.js";
 
+export const OrganizationMemberRoleEnum = z.enum(["org:owner", "org:admin", "org:member", "org:guest"]);
+
 export const OrganizationSchema = z.object({
     id: z.string().uuid(),
     clerk_org_id: z.string(),
@@ -32,11 +34,11 @@ export const CreateOrganizationSchema = z.object({
 
 export const AddMemberSchema = z.object({
     user_id: z.string().uuid(),
-    role: z.string(),
+    role: OrganizationMemberRoleEnum,
 });
 
 export const UpdateMemberRoleSchema = z.object({
-    role: z.string(),
+    role: OrganizationMemberRoleEnum,
 });
 
 export type Organization = z.infer<typeof OrganizationSchema>;
@@ -47,7 +49,7 @@ export const OrganizationMemberSchema = z.object({
     id: z.string().uuid(),
     organization_id: z.string().uuid(),
     user_id: z.string().uuid(),
-    role: z.string(),
+    role: OrganizationMemberRoleEnum,
     joined_at: z.string(),
 }).openapi("OrganizationMember");
 

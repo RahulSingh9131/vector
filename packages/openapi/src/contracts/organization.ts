@@ -3,6 +3,7 @@ import {
     OrganizationSchema,
     UpdateOrganizationSchema,
     OrganizationMemberWithDetailsSchema,
+    OrganizationMemberRoleEnum,
     z
 } from "@vector/zod";
 
@@ -100,7 +101,7 @@ export const organizationContract = c.router({
         }),
         body: z.object({
             user_id: z.string().uuid(),
-            role: z.string(),
+            role: OrganizationMemberRoleEnum,
         }),
         responses: {
             201: OrganizationMemberWithDetailsSchema,
@@ -122,7 +123,7 @@ export const organizationContract = c.router({
             userId: z.string().uuid(),
         }),
         body: z.object({
-            role: z.string(),
+            role: OrganizationMemberRoleEnum,
         }),
         responses: {
             200: OrganizationMemberWithDetailsSchema,

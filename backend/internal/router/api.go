@@ -46,8 +46,8 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 			orgScoped.GET("/members", handler.Handle(h.Organization.Handler, h.Organization.ListMembers, http.StatusOK, &handler.ListMembersRequest{}))
 		}
 
-		// Org member management — require org admin role
-		orgAdmin := orgs.Group("/:id", m.Authorization.RequireOrgMember("admin"))
+		// Org member management — require org admin or owner role
+		orgAdmin := orgs.Group("/:id", m.Authorization.RequireOrgMember("org:owner", "org:admin"))
 		{
 			orgAdmin.POST("/members", handler.Handle(h.Organization.Handler, h.Organization.AddMember, http.StatusCreated, &handler.AddMemberRequest{}))
 			orgAdmin.PATCH("/members/:userId", handler.Handle(h.Organization.Handler, h.Organization.UpdateMemberRole, http.StatusOK, &handler.UpdateMemberRoleRequest{}))
@@ -61,13 +61,16 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		orgActivitySummary := orgs.Group("/:orgId/activity/summary", m.Authorization.RequireOrgMember())
 		orgActivitySummary.GET("", handler.Handle(h.Activity.Handler, h.Activity.OrgActivitySummary, http.StatusOK, &handler.OrgActivitySummaryRequest{}))
 
-		// ─── Project routes (require org membership) ───
+		// ─── Project routes ───
+		// Base group — requires org membership (validates org scope for all project routes)
 		projects := orgs.Group("/:orgId/projects", m.Authorization.RequireOrgMember())
 
-		// Create project — org admin or member only (guests cannot create projects)
-		projects.POST("", handler.Handle(h.Project.Handler, h.Project.CreateProject, http.StatusCreated, &handler.CreateProjectRequest{}))
-		// List projects — any org member
+		// List projects — any org member (including guests)
 		projects.GET("", handler.Handle(h.Project.Handler, h.Project.ListProjects, http.StatusOK, &handler.ListProjectsRequest{}))
+
+		// Create project — owners and admins only
+		projectsWrite := orgs.Group("/:orgId/projects", m.Authorization.RequireOrgMember("org:owner", "org:admin"))
+		projectsWrite.POST("", handler.Handle(h.Project.Handler, h.Project.CreateProject, http.StatusCreated, &handler.CreateProjectRequest{}))
 
 		// ─── Project-scoped routes (require project membership) ───
 		projectScoped := projects.Group("/:projectId", m.Authorization.RequireProjectRole())

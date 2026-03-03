@@ -12,7 +12,7 @@ import (
 // It verifies organization membership, organization roles, and project roles.
 type AuthorizationMiddleware struct {
 	server  *server.Server
-	orgRepo *repository.OrganizationMemberRepository
+	orgRepo *repository.OrganizationRepository
 	prjRepo *repository.ProjectMemberRepository
 }
 
@@ -20,7 +20,7 @@ type AuthorizationMiddleware struct {
 func NewAuthorizationMiddleware(s *server.Server, repos *repository.Repositories) *AuthorizationMiddleware {
 	return &AuthorizationMiddleware{
 		server:  s,
-		orgRepo: repos.OrganizationMember,
+		orgRepo: repos.Organization,
 		prjRepo: repos.ProjectMember,
 	}
 }
@@ -36,14 +36,17 @@ func NewAuthorizationMiddleware(s *server.Server, repos *repository.Repositories
 func (a *AuthorizationMiddleware) RequireOrgMember(allowedRoles ...string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// Extract user ID from context (set by RequireAuth)
-			userID, ok := c.Get("user_id").(uuid.UUID)
-			if !ok {
-				a.server.Logger.Error().
+			// Extract user role and org ID from Clerk JWT (set by RequireAuth)
+			clerkRole, _ := c.Get("user_role").(string)
+			clerkOrgID, _ := c.Get("org_id").(string)
+
+			// If user is not in an organization according to Clerk, deny access
+			if clerkOrgID == "" {
+				a.server.Logger.Warn().
 					Str("middleware", "RequireOrgMember").
 					Str("request_id", GetRequestID(c)).
-					Msg("user_id missing from context — RequireAuth must run first")
-				return errs.NewUnauthorizedError("Authentication required", false)
+					Msg("access denied — user is not in an active organization session")
+				return errs.NewForbiddenError("You are not a member of this organization", false)
 			}
 
 			// Extract org ID from URL params — supports both :id and :orgId naming
@@ -69,37 +72,41 @@ func (a *AuthorizationMiddleware) RequireOrgMember(allowedRoles ...string) echo.
 				return errs.NewBadRequestError("Invalid organization ID format", false, nil, nil, nil)
 			}
 
-			// Look up membership
-			member, err := a.orgRepo.GetMember(c.Request().Context(), orgID, userID)
+			// Verify the requested org exists and matches the user's Clerk org ID
+			org, err := a.orgRepo.GetByID(c.Request().Context(), orgID)
 			if err != nil {
 				a.server.Logger.Error().
 					Err(err).
 					Str("middleware", "RequireOrgMember").
 					Str("org_id", orgID.String()).
-					Str("user_id", userID.String()).
 					Str("request_id", GetRequestID(c)).
-					Msg("failed to query organization membership")
+					Msg("failed to query organization")
 				return errs.NewInternalServerError()
 			}
 
-			if member == nil {
+			if org == nil || org.ClerkOrgID != clerkOrgID {
 				a.server.Logger.Warn().
 					Str("middleware", "RequireOrgMember").
 					Str("org_id", orgID.String()).
-					Str("user_id", userID.String()).
+					Str("clerk_org_id", clerkOrgID).
 					Str("request_id", GetRequestID(c)).
-					Msg("access denied — user is not a member of this organization")
+					Msg("access denied — organization ID mismatch")
 				return errs.NewForbiddenError("You are not a member of this organization", false)
+			}
+
+			// Org owners have full access to everything in the org
+			if clerkRole == "org:owner" {
+				c.Set("org_role", clerkRole)
+				return next(c)
 			}
 
 			// Check role if specific roles are required
 			if len(allowedRoles) > 0 {
-				if !containsRole(allowedRoles, member.Role) {
+				if !containsRole(allowedRoles, clerkRole) {
 					a.server.Logger.Warn().
 						Str("middleware", "RequireOrgMember").
 						Str("org_id", orgID.String()).
-						Str("user_id", userID.String()).
-						Str("user_role", member.Role).
+						Str("user_role", clerkRole).
 						Strs("required_roles", allowedRoles).
 						Str("request_id", GetRequestID(c)).
 						Msg("access denied — insufficient organization role")
@@ -108,7 +115,7 @@ func (a *AuthorizationMiddleware) RequireOrgMember(allowedRoles ...string) echo.
 			}
 
 			// Set org role in context for downstream handlers
-			c.Set("org_role", member.Role)
+			c.Set("org_role", clerkRole)
 
 			return next(c)
 		}
@@ -156,7 +163,14 @@ func (a *AuthorizationMiddleware) RequireProjectRole(allowedRoles ...string) ech
 				return errs.NewBadRequestError("Invalid project ID format", false, nil, nil, nil)
 			}
 
-			// Look up membership
+			// Check for implicit access — Org owners and admins bypass project membership checks
+			orgRole, _ := c.Get("org_role").(string)
+			if orgRole == "org:owner" || orgRole == "org:admin" {
+				c.Set("project_role", "admin") // Grant implicit admin access
+				return next(c)
+			}
+
+			// Look up membership in DB for standard members and guests
 			member, err := a.prjRepo.GetMember(c.Request().Context(), projectID, userID)
 			if err != nil {
 				a.server.Logger.Error().

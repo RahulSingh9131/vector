@@ -9,14 +9,16 @@ import (
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/RahulSingh9131/vector/internal/sqlerr"
 	clerkOrganization "github.com/clerk/clerk-sdk-go/v2/organization"
+	clerkMembership "github.com/clerk/clerk-sdk-go/v2/organizationmembership"
 	"github.com/google/uuid"
 )
 
-// Allowed organization member roles
-var allowedRoles = map[string]bool{
-	"admin":  true,
-	"member": true,
-	"guest":  true,
+// allowedClerkRoles are the valid organization roles in Clerk's format.
+var allowedClerkRoles = map[string]bool{
+	"org:owner":  true,
+	"org:admin":  true,
+	"org:member": true,
+	"org:guest":  true,
 }
 
 // OrganizationService handles business logic for organizations
@@ -24,6 +26,7 @@ type OrganizationService struct {
 	server     *server.Server
 	orgRepo    *repository.OrganizationRepository
 	memberRepo *repository.OrganizationMemberRepository
+	userRepo   *repository.UserRepository
 }
 
 // NewOrganizationService creates a new organization service
@@ -32,6 +35,7 @@ func NewOrganizationService(s *server.Server, repos *repository.Repositories) *O
 		server:     s,
 		orgRepo:    repos.Organization,
 		memberRepo: repos.OrganizationMember,
+		userRepo:   repos.User,
 	}
 }
 
@@ -181,14 +185,14 @@ func (s *OrganizationService) CheckMemberLimit(ctx context.Context, orgID uuid.U
 	return nil
 }
 
-// AddMember adds a user to an organization
+// AddMember adds a user to an organization — syncs to Clerk first, then mirrors to local DB.
 func (s *OrganizationService) AddMember(ctx context.Context, orgID, userID uuid.UUID, role string) (*models.OrganizationMember, error) {
-	// Validate role
-	if !allowedRoles[role] {
+	// Validate role against allowed Clerk roles
+	if !allowedClerkRoles[role] {
 		return nil, errs.NewBadRequestError(
-			"Invalid role. Must be one of: admin, member",
+			"Invalid role. Must be one of: org:owner, org:admin, org:member, org:guest",
 			true, nil,
-			[]errs.FieldError{{Field: "role", Error: "must be one of: admin, member"}},
+			[]errs.FieldError{{Field: "role", Error: "must be one of: org:owner, org:admin, org:member, org:guest"}},
 			nil,
 		)
 	}
@@ -204,17 +208,56 @@ func (s *OrganizationService) AddMember(ctx context.Context, orgID, userID uuid.
 		return nil, err
 	}
 
+	// Look up the org to get its Clerk org ID
+	org, err := s.orgRepo.GetByID(ctx, orgID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if org == nil {
+		return nil, errs.NewNotFoundError("Organization not found", false, nil)
+	}
+
+	// Look up the user to get their Clerk user ID
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if user == nil {
+		return nil, errs.NewNotFoundError("User not found", false, nil)
+	}
+
+	// Step 1: Add to Clerk (source of truth for org membership)
+	_, clerkErr := clerkMembership.Create(ctx, &clerkMembership.CreateParams{
+		OrganizationID: org.ClerkOrgID,
+		UserID:         &user.ClerkUserID,
+		Role:           &role,
+	})
+	if clerkErr != nil {
+		s.server.Logger.Error().Err(clerkErr).
+			Str("org_id", orgID.String()).
+			Str("user_id", userID.String()).
+			Str("clerk_org_id", org.ClerkOrgID).
+			Str("clerk_user_id", user.ClerkUserID).
+			Msg("failed to add member to Clerk organization")
+		return nil, errs.NewBadRequestError("Failed to add member to Clerk: "+clerkErr.Error(), false, nil, nil, nil)
+	}
+
+	s.server.Logger.Info().
+		Str("clerk_org_id", org.ClerkOrgID).
+		Str("clerk_user_id", user.ClerkUserID).
+		Msg("member added to Clerk organization")
+
+	// Step 2: Mirror to local DB
 	member, err := s.memberRepo.AddMember(ctx, models.CreateOrganizationMemberParams{
 		OrganizationID: orgID,
 		UserID:         userID,
 		Role:           role,
 	})
-
 	if err != nil {
 		s.server.Logger.Error().Err(err).
 			Str("org_id", orgID.String()).
 			Str("user_id", userID.String()).
-			Msg("failed to add member to organization")
+			Msg("failed to add member to local DB (Clerk membership was created)")
 		return nil, sqlerr.HandleError(err)
 	}
 
@@ -227,19 +270,56 @@ func (s *OrganizationService) AddMember(ctx context.Context, orgID, userID uuid.
 	return member, nil
 }
 
-// RemoveMember removes a user from an organization
+// RemoveMember removes a user from an organization — syncs to Clerk first, then mirrors to local DB.
 func (s *OrganizationService) RemoveMember(ctx context.Context, orgID, userID uuid.UUID) error {
 	s.server.Logger.Debug().
 		Str("org_id", orgID.String()).
 		Str("user_id", userID.String()).
 		Msg("removing member from organization")
 
-	err := s.memberRepo.RemoveMember(ctx, orgID, userID)
+	// Look up the org to get its Clerk org ID
+	org, err := s.orgRepo.GetByID(ctx, orgID)
 	if err != nil {
+		return sqlerr.HandleError(err)
+	}
+	if org == nil {
+		return errs.NewNotFoundError("Organization not found", false, nil)
+	}
+
+	// Look up the user to get their Clerk user ID
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return sqlerr.HandleError(err)
+	}
+	if user == nil {
+		return errs.NewNotFoundError("User not found", false, nil)
+	}
+
+	// Step 1: Remove from Clerk
+	_, clerkErr := clerkMembership.Delete(ctx, &clerkMembership.DeleteParams{
+		OrganizationID: org.ClerkOrgID,
+		UserID:         user.ClerkUserID,
+	})
+	if clerkErr != nil {
+		s.server.Logger.Error().Err(clerkErr).
+			Str("org_id", orgID.String()).
+			Str("clerk_org_id", org.ClerkOrgID).
+			Str("clerk_user_id", user.ClerkUserID).
+			Msg("failed to remove member from Clerk organization")
+		return errs.NewBadRequestError("Failed to remove member from Clerk: "+clerkErr.Error(), false, nil, nil, nil)
+	}
+
+	s.server.Logger.Info().
+		Str("clerk_org_id", org.ClerkOrgID).
+		Str("clerk_user_id", user.ClerkUserID).
+		Msg("member removed from Clerk organization")
+
+	// Step 2: Remove from local DB
+	if err := s.memberRepo.RemoveMember(ctx, orgID, userID); err != nil {
 		s.server.Logger.Error().Err(err).
 			Str("org_id", orgID.String()).
 			Str("user_id", userID.String()).
-			Msg("failed to remove member from organization")
+			Msg("failed to remove member from local DB (Clerk membership was removed)")
 		return sqlerr.HandleError(err)
 	}
 
@@ -251,14 +331,14 @@ func (s *OrganizationService) RemoveMember(ctx context.Context, orgID, userID uu
 	return nil
 }
 
-// UpdateMemberRole updates a member's role in an organization
+// UpdateMemberRole updates a member's role in an organization — syncs to Clerk first, then mirrors to local DB.
 func (s *OrganizationService) UpdateMemberRole(ctx context.Context, orgID, userID uuid.UUID, role string) (*models.OrganizationMember, error) {
-	// Validate role
-	if !allowedRoles[role] {
+	// Validate role against allowed Clerk roles
+	if !allowedClerkRoles[role] {
 		return nil, errs.NewBadRequestError(
-			"Invalid role. Must be one of: admin, member",
+			"Invalid role. Must be one of: org:owner, org:admin, org:member, org:guest",
 			true, nil,
-			[]errs.FieldError{{Field: "role", Error: "must be one of: admin, member"}},
+			[]errs.FieldError{{Field: "role", Error: "must be one of: org:owner, org:admin, org:member, org:guest"}},
 			nil,
 		)
 	}
@@ -269,12 +349,53 @@ func (s *OrganizationService) UpdateMemberRole(ctx context.Context, orgID, userI
 		Str("role", role).
 		Msg("updating member role")
 
+	// Look up the org to get its Clerk org ID
+	org, err := s.orgRepo.GetByID(ctx, orgID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if org == nil {
+		return nil, errs.NewNotFoundError("Organization not found", false, nil)
+	}
+
+	// Look up the user to get their Clerk user ID
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if user == nil {
+		return nil, errs.NewNotFoundError("User not found", false, nil)
+	}
+
+	// Step 1: Update role in Clerk
+	_, clerkErr := clerkMembership.Update(ctx, &clerkMembership.UpdateParams{
+		OrganizationID: org.ClerkOrgID,
+		UserID:         user.ClerkUserID,
+		Role:           &role,
+	})
+	if clerkErr != nil {
+		s.server.Logger.Error().Err(clerkErr).
+			Str("org_id", orgID.String()).
+			Str("clerk_org_id", org.ClerkOrgID).
+			Str("clerk_user_id", user.ClerkUserID).
+			Str("role", role).
+			Msg("failed to update member role in Clerk")
+		return nil, errs.NewBadRequestError("Failed to update role in Clerk: "+clerkErr.Error(), false, nil, nil, nil)
+	}
+
+	s.server.Logger.Info().
+		Str("clerk_org_id", org.ClerkOrgID).
+		Str("clerk_user_id", user.ClerkUserID).
+		Str("role", role).
+		Msg("member role updated in Clerk")
+
+	// Step 2: Mirror to local DB
 	member, err := s.memberRepo.UpdateRole(ctx, orgID, userID, role)
 	if err != nil {
 		s.server.Logger.Error().Err(err).
 			Str("org_id", orgID.String()).
 			Str("user_id", userID.String()).
-			Msg("failed to update member role")
+			Msg("failed to update member role in local DB (Clerk was updated)")
 		return nil, sqlerr.HandleError(err)
 	}
 

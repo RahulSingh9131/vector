@@ -481,8 +481,9 @@ func (s *OrganizationService) DeactivateOrganization(ctx context.Context, id uui
 	return nil
 }
 
-// CreateOrganization creates a new organization in Clerk and then in the local DB
-func (s *OrganizationService) CreateOrganization(ctx context.Context, params models.CreateOrganizationParams) (*models.Organization, error) {
+// CreateOrganization creates a new organization in Clerk and then in the local DB.
+// The creator is automatically added as org:owner.
+func (s *OrganizationService) CreateOrganization(ctx context.Context, creatorID uuid.UUID, params models.CreateOrganizationParams) (*models.Organization, error) {
 	s.server.Logger.Info().Str("name", params.Name).Msg("creating organization")
 
 	// Set defaults if not provided
@@ -494,6 +495,15 @@ func (s *OrganizationService) CreateOrganization(ctx context.Context, params mod
 	}
 	if params.MaxProjects == 0 {
 		params.MaxProjects = 5
+	}
+
+	// Look up the creator to get their Clerk user ID
+	creator, err := s.userRepo.GetByID(ctx, creatorID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if creator == nil {
+		return nil, errs.NewNotFoundError("Creator user not found", false, nil)
 	}
 
 	// Step 1: Create in Clerk first so it appears in the dashboard
@@ -523,6 +533,41 @@ func (s *OrganizationService) CreateOrganization(ctx context.Context, params mod
 			Msg("failed to create organization in database (Clerk org was created)")
 		return nil, sqlerr.HandleError(err)
 	}
+
+	// Step 3: Add the creator as org:owner in Clerk
+	ownerRole := "org:owner"
+	_, clerkErr := clerkMembership.Create(ctx, &clerkMembership.CreateParams{
+		OrganizationID: clerkOrg.ID,
+		UserID:         &creator.ClerkUserID,
+		Role:           &ownerRole,
+	})
+	if clerkErr != nil {
+		s.server.Logger.Error().Err(clerkErr).
+			Str("org_id", org.ID.String()).
+			Str("clerk_org_id", clerkOrg.ID).
+			Str("clerk_user_id", creator.ClerkUserID).
+			Msg("failed to add creator as owner in Clerk (org was created)")
+		return nil, errs.NewBadRequestError("Failed to add creator as owner in Clerk: "+clerkErr.Error(), false, nil, nil, nil)
+	}
+
+	// Step 4: Mirror the owner membership to local DB
+	_, err = s.memberRepo.AddMember(ctx, models.CreateOrganizationMemberParams{
+		OrganizationID: org.ID,
+		UserID:         creatorID,
+		Role:           ownerRole,
+	})
+	if err != nil {
+		s.server.Logger.Error().Err(err).
+			Str("org_id", org.ID.String()).
+			Str("user_id", creatorID.String()).
+			Msg("failed to add creator as owner in local DB (Clerk membership was created)")
+		return nil, sqlerr.HandleError(err)
+	}
+
+	s.server.Logger.Info().
+		Str("org_id", org.ID.String()).
+		Str("user_id", creatorID.String()).
+		Msg("creator added as org:owner successfully")
 
 	return org, nil
 }

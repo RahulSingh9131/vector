@@ -76,3 +76,21 @@ tasks:
     cmds:
     - echo 'Running golangci-lint with auto-fix...'
     - golangci-lint run --fix ./...
+
+  test:
+    desc: run all tests
+    cmds:
+    - echo 'Running tests...'
+    - go test ./... -count=1
+
+  test:verbose:
+    desc: run all tests with verbose output
+    cmds:
+    - echo 'Running tests (verbose)...'
+    - go test ./... -v -count=1
+
+  test:repository:
+    desc: run repository integration tests (requires Docker)
+    cmds:
+    - echo 'Running repository integration tests...'
+    - go test ./internal/repository/... -v -count=1

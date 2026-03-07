@@ -33,7 +33,7 @@ func (r *CreateOrganizationRequest) Validate() error {
 type AddMemberRequest struct {
 	ID     string `param:"id" validate:"required,uuid"`
 	UserID string `json:"user_id" validate:"required,uuid"`
-	Role   string `json:"role" validate:"required,oneof=admin member guest"`
+	Role   string `json:"role" validate:"required,oneof=org:owner org:admin org:member org:guest"`
 }
 
 func (r *AddMemberRequest) Validate() error {

@@ -208,6 +208,15 @@ func (s *OrganizationService) AddMember(ctx context.Context, orgID, userID uuid.
 		return nil, err
 	}
 
+	// Check if user is already a member
+	existingMember, err := s.memberRepo.GetMember(ctx, orgID, userID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	if existingMember != nil {
+		return nil, errs.NewConflictError("User is already a member of this organization", true, nil)
+	}
+
 	// Look up the org to get its Clerk org ID
 	org, err := s.orgRepo.GetByID(ctx, orgID)
 	if err != nil {

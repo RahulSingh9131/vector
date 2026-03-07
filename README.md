@@ -173,7 +173,7 @@ cd vector
 docker-compose up --build
 ```
 
-The API will be available at **http://localhost:8080**.
+The API will be available at **http://localhost:8080**, and interactive API docs at **http://localhost:8080/docs**.
 
 ### Option 2: Local Development
 
@@ -214,17 +214,27 @@ bun run build
 
 ```bash
 # Health check
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8080/status
 
 # Expected response
 {
   "status": "healthy",
+  "environment": "local",
+  "timestamp": "2026-03-07T07:55:33.47128Z",
   "checks": {
-    "database": "up",
-    "redis": "up"
+    "database": {
+      "status": "healthy",
+      "response_time": "6.81425ms"
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time": "186.792µs"
+    }
   }
 }
 ```
+
+> **📡 API Documentation** — Once the server is running, visit **http://localhost:8080/docs** for interactive API docs powered by [Scalar](https://scalar.com), with request builder, code examples, and try-it-out capabilities.
 
 ---
 

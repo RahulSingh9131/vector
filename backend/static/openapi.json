@@ -1265,7 +1265,7 @@
           }
         ]
       },
-      "put": {
+      "patch": {
         "summary": "Update organization details",
         "tags": [
           "Organization"
@@ -1830,6 +1830,24 @@
           },
           "404": {
             "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
             "content": {
               "application/json": {
                 "schema": {

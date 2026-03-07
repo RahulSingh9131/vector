@@ -74,6 +74,17 @@ func (h *OrganizationHandler) CreateOrganization(c echo.Context, req *CreateOrga
 	})
 }
 
+// UpdateOrganization updates an organization's settings
+func (h *OrganizationHandler) UpdateOrganization(c echo.Context, req *UpdateOrganizationRequest) (*models.Organization, error) {
+	orgID, _ := uuid.Parse(req.ID)
+
+	return h.services.Organization.UpdateSettings(c.Request().Context(), orgID, models.UpdateOrganizationParams{
+		Name:    req.Name,
+		Slug:    req.Slug,
+		LogoURL: req.LogoURL,
+	})
+}
+
 // AddMember adds a user to an organization
 func (h *OrganizationHandler) AddMember(c echo.Context, req *AddMemberRequest) (*models.OrganizationMember, error) {
 	orgID, _ := uuid.Parse(req.ID)

@@ -49,6 +49,7 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 		// Org member management — require org admin or owner role
 		orgAdmin := orgs.Group("/:id", m.Authorization.RequireOrgMember("org:owner", "org:admin"))
 		{
+			orgAdmin.PATCH("", handler.Handle(h.Organization.Handler, h.Organization.UpdateOrganization, http.StatusOK, &handler.UpdateOrganizationRequest{}))
 			orgAdmin.POST("/members", handler.Handle(h.Organization.Handler, h.Organization.AddMember, http.StatusCreated, &handler.AddMemberRequest{}))
 			orgAdmin.PATCH("/members/:userId", handler.Handle(h.Organization.Handler, h.Organization.UpdateMemberRole, http.StatusOK, &handler.UpdateMemberRoleRequest{}))
 			orgAdmin.DELETE("/members/:userId", handler.Handle(h.Organization.Handler, h.Organization.RemoveMember, http.StatusNoContent, &handler.RemoveMemberRequest{}))

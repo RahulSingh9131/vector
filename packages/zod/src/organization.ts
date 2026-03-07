@@ -17,13 +17,9 @@ export const OrganizationSchema = z.object({
 }).openapi("Organization");
 
 export const UpdateOrganizationSchema = z.object({
-    name: z.string().optional(),
-    slug: z.string().optional(),
-    logo_url: z.string().url().optional(),
-    subscription_tier: z.enum(["free", "pro", "enterprise"]).optional(),
-    max_members: z.number().optional(),
-    max_projects: z.number().optional(),
-    is_active: z.boolean().optional(),
+    name: z.string().min(1).max(100).optional(),
+    slug: z.string().min(1).max(100).optional(),
+    logoUrl: z.string().url().optional(),
 });
 
 export const CreateOrganizationSchema = z.object({

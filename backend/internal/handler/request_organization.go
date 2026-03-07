@@ -29,11 +29,23 @@ func (r *CreateOrganizationRequest) Validate() error {
 	return validate.Struct(r)
 }
 
+// UpdateOrganizationRequest represents the request body for updating an organization
+type UpdateOrganizationRequest struct {
+	ID      string  `param:"id" validate:"required,uuid"`
+	Name    *string `json:"name" validate:"omitempty,min=1,max=100"`
+	Slug    *string `json:"slug" validate:"omitempty,min=1,max=100"`
+	LogoURL *string `json:"logoUrl" validate:"omitempty,url"`
+}
+
+func (r *UpdateOrganizationRequest) Validate() error {
+	return validate.Struct(r)
+}
+
 // AddMemberRequest represents the request body for adding a member to an organization
 type AddMemberRequest struct {
 	ID     string `param:"id" validate:"required,uuid"`
 	UserID string `json:"user_id" validate:"required,uuid"`
-	Role   string `json:"role" validate:"required,oneof=admin member guest"`
+	Role   string `json:"role" validate:"required,oneof=org:owner org:admin org:member org:guest"`
 }
 
 func (r *AddMemberRequest) Validate() error {
@@ -44,7 +56,7 @@ func (r *AddMemberRequest) Validate() error {
 type UpdateMemberRoleRequest struct {
 	ID     string `param:"id" validate:"required,uuid"`
 	UserID string `param:"userId" validate:"required,uuid"`
-	Role   string `json:"role" validate:"required,oneof=admin member guest"`
+	Role   string `json:"role" validate:"required,oneof=org:owner org:admin org:member org:guest"`
 }
 
 func (r *UpdateMemberRoleRequest) Validate() error {

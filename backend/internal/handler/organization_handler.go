@@ -60,9 +60,25 @@ func (h *OrganizationHandler) ListMembers(c echo.Context, req *ListMembersReques
 	return members, nil
 }
 
-// CreateOrganization creates a new organization
+// CreateOrganization creates a new organization and adds the creator as owner
 func (h *OrganizationHandler) CreateOrganization(c echo.Context, req *CreateOrganizationRequest) (*models.Organization, error) {
-	return h.services.Organization.CreateOrganization(c.Request().Context(), models.CreateOrganizationParams{
+	creatorID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok {
+		return nil, errs.NewInternalServerError()
+	}
+
+	return h.services.Organization.CreateOrganization(c.Request().Context(), creatorID, models.CreateOrganizationParams{
+		Name:    req.Name,
+		Slug:    req.Slug,
+		LogoURL: req.LogoURL,
+	})
+}
+
+// UpdateOrganization updates an organization's settings
+func (h *OrganizationHandler) UpdateOrganization(c echo.Context, req *UpdateOrganizationRequest) (*models.Organization, error) {
+	orgID, _ := uuid.Parse(req.ID)
+
+	return h.services.Organization.UpdateSettings(c.Request().Context(), orgID, models.UpdateOrganizationParams{
 		Name:    req.Name,
 		Slug:    req.Slug,
 		LogoURL: req.LogoURL,

@@ -40,7 +40,7 @@ export const organizationContract = c.router({
         },
     },
     updateOrganization: {
-        method: "PUT",
+        method: "PATCH",
         path: "/organizations/:id",
         pathParams: z.object({
             id: z.string().uuid(),
@@ -109,6 +109,7 @@ export const organizationContract = c.router({
             401: z.object({ message: z.string() }),
             403: z.object({ message: z.string() }),
             404: z.object({ message: z.string() }),
+            409: z.object({ message: z.string() }),
         },
         summary: "Add a member to an organization",
         metadata: {

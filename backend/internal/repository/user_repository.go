@@ -215,7 +215,7 @@ func (r *UserRepository) UpdateLastLogin(ctx context.Context, id uuid.UUID) erro
 		WHERE id = $1
 	`
 
-	_, err := r.db.Exec(ctx, query, id, time.Now())
+	_, err := r.db.Exec(ctx, query, id, time.Now().UTC())
 	return err
 }
 

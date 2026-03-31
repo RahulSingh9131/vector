@@ -27,6 +27,8 @@ output:
   formats:
     colored-line-number:
       path: stdout
+    github-actions:
+      path: stdout
   
   # Print lines of code with issue.
   print-issued-lines: true

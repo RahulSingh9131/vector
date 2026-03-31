@@ -25,9 +25,9 @@ run:
 output:
   # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate|html|junit-xml|github-actions
   formats:
-    colored-line-number:
+    - name: colored-line-number
       path: stdout
-    github-actions:
+    - name: github-actions
       path: stdout
   
   # Print lines of code with issue.

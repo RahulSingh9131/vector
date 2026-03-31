@@ -41,13 +41,7 @@ jobs:
       - name: Run golangci-lint
         run: |
           git fetch origin main
-          $(go env GOPATH)/bin/golangci-lint run ./... --timeout 5m --new-from-rev=origin/main > lint_report.txt 2>&1 || true
-
-      - name: Upload lint report
-        uses: actions/upload-artifact@v4
-        with:
-          name: lint-report
-          path: backend/lint_report.txt
+          $(go env GOPATH)/bin/golangci-lint run ./... --timeout 5m --new-from-rev=origin/main
 
       - name: Build
         run: go build ./...

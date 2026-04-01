@@ -8,6 +8,7 @@ import { labelContract } from "./label.js";
 import { commentContract } from "./comment.js";
 import { activityContract } from "./activity.js";
 import { notificationContract } from "./notification.js";
+import { searchContract } from "./search.js";
 
 const c = initContract();
 
@@ -21,6 +22,7 @@ const apiV1 = c.router(
         Comment: commentContract,
         Activity: activityContract,
         Notification: notificationContract,
+        Search: searchContract,
     },
     {
         pathPrefix: "/api/v1",
@@ -37,4 +39,5 @@ export const apiContract = c.router({
     Comment: apiV1.Comment,
     Activity: apiV1.Activity,
     Notification: apiV1.Notification,
+    Search: apiV1.Search,
 });

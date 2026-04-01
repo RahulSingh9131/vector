@@ -72,8 +72,8 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 			}
 
 			// Add user context if available
-			if userID := GetUserID(c); userID != "" {
-				e = e.Str("user_id", userID)
+			if userID, err := GetUserID(c); err == nil {
+				e = e.Str("user_id", userID.String())
 			}
 
 			e.

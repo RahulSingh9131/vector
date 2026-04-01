@@ -17,6 +17,7 @@ type Handlers struct {
 	Label        *LabelHandler
 	Comment      *CommentHandler
 	Activity     *ActivityHandler
+	Notification *NotificationHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -31,6 +32,7 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Label:        NewLabelHandler(s, services),
 		Comment:      NewCommentHandler(s, services),
 		Activity:     NewActivityHandler(s, services),
+		Notification: NewNotificationHandler(s, services),
 	}
 }
 

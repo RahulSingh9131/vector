@@ -12,6 +12,7 @@ type Repositories struct {
 	Label              *LabelRepository
 	Comment            *CommentRepository
 	Activity           *ActivityRepository
+	Notification       *NotificationRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -25,6 +26,7 @@ func NewRepositories(s *server.Server) *Repositories {
 		Label:              NewLabelRepository(s),
 		Comment:            NewCommentRepository(s),
 		Activity:           NewActivityRepository(s),
+		Notification:       NewNotificationRepository(s, s.DB.Pool),
 	}
 }
 

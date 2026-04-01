@@ -17,6 +17,7 @@ import (
 	"github.com/RahulSingh9131/vector/internal/router"
 	"github.com/RahulSingh9131/vector/internal/server"
 	"github.com/RahulSingh9131/vector/internal/service"
+	"github.com/hibiken/asynq"
 )
 
 const DefaultContextTimeout = 30
@@ -57,9 +58,21 @@ func main() {
 	}
 	handlers := handler.NewHandlers(srv, services)
 
-	// Register activity subscriber for domain events
+	// Register event handlers
 	activitySubscriber := events.NewActivitySubscriber(repos.Activity, &log)
-	srv.Job.RegisterEventHandler(activitySubscriber.HandleEvent)
+	notificationSubscriber := events.NewNotificationSubscriber(srv, repos, &log)
+
+	srv.Job.RegisterEventHandler(func(ctx context.Context, task *asynq.Task) error {
+		// Run activity subscriber
+		if err := activitySubscriber.HandleEvent(ctx, task); err != nil {
+			log.Error().Err(err).Msg("activity subscriber failed")
+		}
+		// Run notification subscriber
+		if err := notificationSubscriber.HandleEvent(ctx, task); err != nil {
+			log.Error().Err(err).Msg("notification subscriber failed")
+		}
+		return nil
+	})
 
 	// Start job server (after event handlers are registered)
 	if err := srv.Job.Start(); err != nil {

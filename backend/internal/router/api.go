@@ -148,5 +148,14 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 
 		projectActivitySummary := projectScoped.Group("/activity/summary")
 		projectActivitySummary.GET("", handler.Handle(h.Activity.Handler, h.Activity.ProjectActivitySummary, http.StatusOK, &handler.ProjectActivitySummaryRequest{}))
+
+		// ─── Notification routes ───
+		notifications := api.Group("/notifications")
+		{
+			notifications.GET("", handler.Handle(h.Notification.Handler, h.Notification.ListNotifications, http.StatusOK, &handler.ListNotificationsRequest{}))
+			notifications.PATCH("/:id/read", handler.HandleNoContent(h.Notification.Handler, h.Notification.MarkAsRead, http.StatusOK, &handler.MarkAsReadRequest{}))
+			notifications.POST("/read-all", handler.HandleNoContent(h.Notification.Handler, h.Notification.MarkAllAsRead, http.StatusOK, &handler.EmptyRequest{}))
+			notifications.GET("/stream", h.Notification.StreamNotifications)
+		}
 	}
 }

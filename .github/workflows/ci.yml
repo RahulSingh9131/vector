@@ -41,7 +41,8 @@ jobs:
       - name: Run golangci-lint
         run: |
           git fetch origin main
-          $(go env GOPATH)/bin/golangci-lint run ./... --timeout 5m --new-from-rev=origin/main
+          export PATH=$PATH:$(go env GOPATH)/bin
+          golangci-lint run ./... --timeout 5m --new-from-rev=origin/main
 
       - name: Build
         run: go build ./...

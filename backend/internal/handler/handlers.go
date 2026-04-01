@@ -18,6 +18,7 @@ type Handlers struct {
 	Comment      *CommentHandler
 	Activity     *ActivityHandler
 	Notification *NotificationHandler
+	Search       *SearchHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -33,6 +34,7 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Comment:      NewCommentHandler(s, services),
 		Activity:     NewActivityHandler(s, services),
 		Notification: NewNotificationHandler(s, services),
+		Search:       NewSearchHandler(s, services),
 	}
 }
 

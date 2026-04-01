@@ -13,6 +13,7 @@ type Repositories struct {
 	Comment            *CommentRepository
 	Activity           *ActivityRepository
 	Notification       *NotificationRepository
+	Search             *SearchRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -27,6 +28,7 @@ func NewRepositories(s *server.Server) *Repositories {
 		Comment:            NewCommentRepository(s),
 		Activity:           NewActivityRepository(s),
 		Notification:       NewNotificationRepository(s, s.DB.Pool),
+		Search:             NewSearchRepository(s),
 	}
 }
 

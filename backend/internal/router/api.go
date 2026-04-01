@@ -157,5 +157,8 @@ func registerAPIRoutes(r *echo.Group, h *handler.Handlers, m *middleware.Middlew
 			notifications.POST("/read-all", handler.HandleNoContent(h.Notification.Handler, h.Notification.MarkAllAsRead, http.StatusOK, &handler.EmptyRequest{}))
 			notifications.GET("/stream", h.Notification.StreamNotifications)
 		}
+
+		// ─── Search routes ───
+		api.GET("/search", handler.Handle(h.Search.Handler, h.Search.Search, http.StatusOK, &handler.SearchRequest{}))
 	}
 }

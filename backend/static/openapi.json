@@ -9726,6 +9726,204 @@
           }
         ]
       }
+    },
+    "/api/v1/search": {
+      "get": {
+        "summary": "Unified full-text search across issues and comments",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "0": "S",
+              "1": "e",
+              "2": "a",
+              "3": "r",
+              "4": "c",
+              "5": "h",
+              "6": "R",
+              "7": "e",
+              "8": "s",
+              "9": "u",
+              "10": "l",
+              "11": "t",
+              "12": "T",
+              "13": "y",
+              "14": "p",
+              "15": "e",
+              "type": "string",
+              "enum": [
+                "issue",
+                "comment"
+              ]
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          }
+        ],
+        "operationId": "search",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "S",
+                  "1": "e",
+                  "2": "a",
+                  "3": "r",
+                  "4": "c",
+                  "5": "h",
+                  "6": "R",
+                  "7": "e",
+                  "8": "s",
+                  "9": "p",
+                  "10": "o",
+                  "11": "n",
+                  "12": "s",
+                  "13": "e",
+                  "type": "array",
+                  "items": {
+                    "0": "S",
+                    "1": "e",
+                    "2": "a",
+                    "3": "r",
+                    "4": "c",
+                    "5": "h",
+                    "6": "R",
+                    "7": "e",
+                    "8": "s",
+                    "9": "u",
+                    "10": "l",
+                    "11": "t",
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "type": {
+                        "0": "S",
+                        "1": "e",
+                        "2": "a",
+                        "3": "r",
+                        "4": "c",
+                        "5": "h",
+                        "6": "R",
+                        "7": "e",
+                        "8": "s",
+                        "9": "u",
+                        "10": "l",
+                        "11": "t",
+                        "12": "T",
+                        "13": "y",
+                        "14": "p",
+                        "15": "e",
+                        "type": "string",
+                        "enum": [
+                          "issue",
+                          "comment"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "issueId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "issueKey": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "rank": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "type",
+                      "title",
+                      "description",
+                      "rank"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {

@@ -12,6 +12,7 @@ import (
 	"github.com/RahulSingh9131/vector/internal/config"
 	"github.com/RahulSingh9131/vector/internal/database"
 	"github.com/RahulSingh9131/vector/internal/lib/job"
+	"github.com/RahulSingh9131/vector/internal/lib/realtime"
 	"github.com/RahulSingh9131/vector/internal/logger"
 	"github.com/newrelic/go-agent/v3/integrations/nrredis-v9"
 	"github.com/redis/go-redis/v9"
@@ -19,13 +20,14 @@ import (
 )
 
 type Server struct {
-	Config        *config.Config
-	Logger        *zerolog.Logger
-	LoggerService *logger.LoggerService
-	DB            *database.Database
-	Redis         *redis.Client
-	httpServer    *http.Server
-	Job           *job.JobService
+	Config              *config.Config
+	Logger              *zerolog.Logger
+	LoggerService       *logger.LoggerService
+	DB                  *database.Database
+	Redis               *redis.Client
+	httpServer          *http.Server
+	Job                 *job.JobService
+	NotificationManager *realtime.NotificationManager
 }
 
 func New(cfg *config.Config, logger *zerolog.Logger, loggerService *logger.LoggerService) (*Server, error) {
@@ -57,14 +59,17 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *logger.Logge
 	jobService := job.NewJobService(logger, cfg)
 	jobService.InitHandlers(cfg, logger, db.Pool)
 
-	return &Server{
+	srv := &Server{
 		Config:        cfg,
 		Logger:        logger,
 		LoggerService: loggerService,
 		DB:            db,
 		Redis:         redisClient,
 		Job:           jobService,
-	}, nil
+	}
+	srv.NotificationManager = realtime.NewNotificationManager(logger, redisClient)
+
+	return srv, nil
 }
 
 func (s *Server) SetupHTTPServer(handler http.Handler) {
@@ -81,6 +86,10 @@ func (s *Server) Start() error {
 	if s.httpServer == nil {
 		return errors.New("http server is not initialized")
 	}
+
+	// Start real-time notification listener
+	go s.NotificationManager.StartRedisListener(context.Background())
+
 	s.Logger.Info().Str("port", s.Config.Server.Port).Str("env", s.Config.Primary.Env).Msg("Starting HTTP server")
 
 	return s.httpServer.ListenAndServe()

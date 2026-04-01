@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/RahulSingh9131/vector/internal/logger"
 	"github.com/RahulSingh9131/vector/internal/server"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/zerolog"
@@ -84,11 +86,21 @@ func (ce *ContextEnhancer) extractUserRole(c echo.Context) string {
 	return ""
 }
 
-func GetUserID(c echo.Context) string {
-	if userID, ok := c.Get(string(UserIDKey)).(string); ok {
-		return userID
+func GetUserID(c echo.Context) (uuid.UUID, error) {
+	val := c.Get(string(UserIDKey))
+	if val == nil {
+		return uuid.Nil, fmt.Errorf("user_id not found in context")
 	}
-	return ""
+
+	if id, ok := val.(uuid.UUID); ok {
+		return id, nil
+	}
+
+	if idStr, ok := val.(string); ok {
+		return uuid.Parse(idStr)
+	}
+
+	return uuid.Nil, fmt.Errorf("invalid user_id type in context: %T", val)
 }
 
 func GetLogger(c echo.Context) *zerolog.Logger {
